@@ -44,60 +44,79 @@ if ($idsClientes) {
 $titulo_pagina = 'Contatos';
 require __DIR__ . '/includes/header.php';
 ?>
-
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h1 class="h4 mb-0">Contatos</h1>
-  <a href="cliente_form.php" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Novo contato</a>
-</div>
-
-<form method="get" class="mb-3">
-  <div class="input-group" style="max-width:400px;">
-    <input type="text" name="q" class="form-control" placeholder="Buscar por nome, telefone ou e-mail" value="<?= h($busca) ?>">
-    <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-search"></i></button>
+<main class="fade container">
+  <div class="page-header">
+    <div>
+      <h1>Contatos</h1>
+      <p><?= count($clientes) ?> clientes cadastrados</p>
+    </div>
+    <a href="cliente_form.php" class="btn btn-primary"><?= icone('plus', 16, '2.4') ?>Novo contato</a>
   </div>
-</form>
 
-<div class="table-responsive">
-  <table class="table table-hover align-middle bg-white">
-    <thead>
-      <tr>
-        <th>Nome</th>
-        <th>Contato</th>
-        <th>Origem</th>
-        <th>Projetos</th>
-        <th class="text-end">Ações</th>
-      </tr>
-    </thead>
-    <tbody>
-      <?php foreach ($clientes as $c): ?>
-        <tr>
-          <td><?= h($c['nome']) ?></td>
-          <td>
-            <?php if ($c['telefone']): ?><div><?= h($c['telefone']) ?></div><?php endif; ?>
-            <?php if ($c['email']): ?><div class="text-muted small"><?= h($c['email']) ?></div><?php endif; ?>
-            <?php if (!$c['telefone'] && !$c['email'] && $c['link_atendimento']): ?>
-              <a class="small" href="<?= h($c['link_atendimento']) ?>" target="_blank" rel="noopener">link de atendimento</a>
-            <?php endif; ?>
-          </td>
-          <td><?= h($c['origem_nome'] ?? '-') ?></td>
-          <td>
-            <?php foreach ($projetosPorCliente[$c['id']] ?? [] as $p): ?>
-              <a href="projeto_view.php?id=<?= (int)$p['id'] ?>" class="badge text-decoration-none mb-1" style="background:<?= h($p['cor']) ?>"><?= h($p['etapa']) ?></a>
-            <?php endforeach; ?>
-            <?php if (empty($projetosPorCliente[$c['id']])): ?>
-              <a href="projeto_form.php?cliente_id=<?= (int)$c['id'] ?>" class="small">+ criar projeto</a>
-            <?php endif; ?>
-          </td>
-          <td class="text-end">
-            <a href="cliente_form.php?id=<?= (int)$c['id'] ?>" class="btn btn-sm btn-outline-secondary">Editar</a>
-          </td>
-        </tr>
-      <?php endforeach; ?>
-      <?php if (!$clientes): ?>
-        <tr><td colspan="5" class="text-center text-muted py-4">Nenhum contato encontrado.</td></tr>
-      <?php endif; ?>
-    </tbody>
-  </table>
-</div>
+  <div class="card">
+    <div class="table-toolbar">
+      <form method="get" class="table-search">
+        <?= icone('search', 15, '2') ?>
+        <input type="text" name="q" placeholder="Buscar por nome, telefone ou e-mail…" value="<?= h($busca) ?>">
+      </form>
+      <span style="font-size:12.5px;color:var(--faint);margin-left:auto"><?= count($clientes) ?> resultado(s)</span>
+    </div>
 
+    <?php if ($clientes): ?>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Contato</th>
+            <th>Origem</th>
+            <th>Etapas</th>
+            <th style="text-align:right">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php foreach ($clientes as $c): ?>
+            <tr>
+              <td>
+                <div style="display:flex;align-items:center;gap:11px">
+                  <span class="avatar avatar-sq" style="width:34px;height:34px;font-size:12.5px;background:<?= h(avatar_cor($c['nome'])) ?>"><?= h(iniciais($c['nome'])) ?></span>
+                  <div style="font-weight:700;font-size:13.5px"><?= h($c['nome']) ?></div>
+                </div>
+              </td>
+              <td>
+                <?php if ($c['telefone']): ?><div><?= h($c['telefone']) ?></div><?php endif; ?>
+                <?php if ($c['email']): ?><div style="font-size:12px;color:var(--muted)"><?= h($c['email']) ?></div><?php endif; ?>
+                <?php if (!$c['telefone'] && !$c['email'] && $c['link_atendimento']): ?>
+                  <a href="<?= h($c['link_atendimento']) ?>" target="_blank" rel="noopener" style="font-size:12.5px">link de atendimento</a>
+                <?php endif; ?>
+                <?php if (!$c['telefone'] && !$c['email'] && !$c['link_atendimento']): ?>
+                  <span style="color:var(--faint)">-</span>
+                <?php endif; ?>
+              </td>
+              <td><?= $c['origem_nome'] ? '<span class="pill-soft">' . h($c['origem_nome']) . '</span>' : '<span style="color:var(--faint)">-</span>' ?></td>
+              <td>
+                <?php foreach ($projetosPorCliente[$c['id']] ?? [] as $p): ?>
+                  <a href="projeto_view.php?id=<?= (int)$p['id'] ?>" class="pill" style="color:<?= h($p['cor']) ?>;background:color-mix(in srgb, <?= h($p['cor']) ?> 16%, transparent);margin:2px"><?= h($p['etapa']) ?></a>
+                <?php endforeach; ?>
+                <?php if (empty($projetosPorCliente[$c['id']])): ?>
+                  <a href="projeto_form.php?cliente_id=<?= (int)$c['id'] ?>" style="font-size:12.5px">+ criar projeto</a>
+                <?php endif; ?>
+              </td>
+              <td style="text-align:right">
+                <a href="cliente_form.php?id=<?= (int)$c['id'] ?>" class="icon-action" title="Editar"><?= icone('edit', 15) ?></a>
+              </td>
+            </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+    <?php else: ?>
+      <div class="empty-state">
+        <div class="empty-state-icon"><?= icone('search', 24, '1.8') ?></div>
+        <p>Nenhum contato encontrado</p>
+        <p>Tente outro termo de busca ou cadastre um novo contato.</p>
+      </div>
+    <?php endif; ?>
+  </div>
+</main>
 <?php require __DIR__ . '/includes/footer.php'; ?>

@@ -18,32 +18,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $erro = 'E-mail ou senha inválidos.';
 }
 
-require_once __DIR__ . '/includes/functions.php';
 $titulo_pagina = 'Login';
 require __DIR__ . '/includes/header.php';
 ?>
-<div class="row justify-content-center mt-5">
-  <div class="col-md-4">
-    <div class="card shadow-sm">
-      <div class="card-body p-4">
-        <h1 class="h4 mb-4 text-center">ProntoPost CRM</h1>
-        <?php if ($erro): ?>
-          <div class="alert alert-danger"><?= h($erro) ?></div>
-        <?php endif; ?>
-        <form method="post">
-          <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
-          <div class="mb-3">
-            <label class="form-label">E-mail</label>
-            <input type="email" name="email" class="form-control" required autofocus>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Senha</label>
-            <input type="password" name="senha" class="form-control" required>
-          </div>
-          <button type="submit" class="btn btn-primary w-100">Entrar</button>
-        </form>
+<main class="fade login-page">
+  <div class="login-form-col">
+    <div class="login-form-wrap">
+      <div class="login-brand">
+        <span class="topbar-logo">🤌</span>
+        <span class="login-brand-name">ProntoPost</span>
       </div>
+      <h1>Bem-vindo de volta</h1>
+      <p>Entre para acompanhar a produção de conteúdo.</p>
+
+      <?php if ($erro): ?><div class="login-error"><?= h($erro) ?></div><?php endif; ?>
+
+      <form method="post" class="login-fields">
+        <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
+        <div class="field">
+          <label>E-mail</label>
+          <input type="email" name="email" required autofocus>
+        </div>
+        <div class="field">
+          <label>Senha</label>
+          <input type="password" name="senha" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block" style="margin-top:6px">Entrar</button>
+      </form>
+      <p class="login-footnote">Ferramenta interna · acesso restrito à equipe ProntoPost</p>
     </div>
   </div>
-</div>
+  <div class="login-panel">
+    <div class="blob-a"></div>
+    <div class="blob-b"></div>
+    <div class="login-panel-content">
+      <div class="login-kicker">✦ Feito para quem cria conteúdo</div>
+      <h2>Do primeiro contato ao post agendado, tudo num lugar.</h2>
+      <p>Acompanhe cada cliente pelo Kanban, registre notas da equipe e nunca perca uma próxima ação.</p>
+    </div>
+  </div>
+</main>
 <?php require __DIR__ . '/includes/footer.php'; ?>

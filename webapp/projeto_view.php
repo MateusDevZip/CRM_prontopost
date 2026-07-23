@@ -53,94 +53,118 @@ $historico = db()->prepare("
 $historico->execute([$id]);
 $historico = $historico->fetchAll();
 
+$campos = [
+    'Plano' => $projeto['plano_nome'] ?? '-',
+    'Responsável' => $projeto['responsavel_nome'] ?? '-',
+    'Chegou em' => formatar_data($projeto['chegou_em']),
+    'Aprovação 1º post' => formatar_data($projeto['aprovacao_primeiro_post']),
+    'Resultado aprovação' => $projeto['resultado_aprovacao'] ?? '-',
+    'Mês de conteúdo' => $projeto['mes_conteudo'] ?? '-',
+    'Posts no mês' => $projeto['posts_no_mes'] !== null ? (string)$projeto['posts_no_mes'] : '-',
+    'Valor estimado' => formatar_valor($projeto['valor_estimado'] !== null ? (float)$projeto['valor_estimado'] : null),
+];
+
 $titulo_pagina = $projeto['cliente_nome'];
 require __DIR__ . '/includes/header.php';
 ?>
-
-<div class="d-flex justify-content-between align-items-start mb-3">
-  <div>
-    <h1 class="h4 mb-1"><?= h($projeto['cliente_nome']) ?></h1>
-    <span class="badge" style="background:<?= h($projeto['etapa_cor']) ?>"><?= h($projeto['etapa_nome']) ?></span>
-  </div>
-  <div>
-    <a href="cliente_form.php?id=<?= (int)$projeto['cliente_id'] ?>" class="btn btn-sm btn-outline-secondary">Editar contato</a>
-    <a href="projeto_form.php?id=<?= (int)$projeto['id'] ?>" class="btn btn-sm btn-primary">Editar projeto</a>
-  </div>
-</div>
-
-<div class="row g-3">
-  <div class="col-lg-7">
-    <div class="card shadow-sm mb-3">
-      <div class="card-header fw-semibold">Dados do projeto</div>
-      <div class="card-body">
-        <dl class="row mb-0">
-          <dt class="col-sm-4">Plano</dt><dd class="col-sm-8"><?= h($projeto['plano_nome'] ?? '-') ?></dd>
-          <dt class="col-sm-4">Responsável</dt><dd class="col-sm-8"><?= h($projeto['responsavel_nome'] ?? '-') ?></dd>
-          <dt class="col-sm-4">Chegou em</dt><dd class="col-sm-8"><?= formatar_data($projeto['chegou_em']) ?></dd>
-          <dt class="col-sm-4">Mês de conteúdo</dt><dd class="col-sm-8"><?= h($projeto['mes_conteudo'] ?? '-') ?></dd>
-          <dt class="col-sm-4">Posts no mês</dt><dd class="col-sm-8"><?= h((string)($projeto['posts_no_mes'] ?? '-')) ?></dd>
-          <dt class="col-sm-4">Aprovação 1º post</dt><dd class="col-sm-8"><?= formatar_data($projeto['aprovacao_primeiro_post']) ?></dd>
-          <dt class="col-sm-4">Resultado aprovação</dt><dd class="col-sm-8"><?= h($projeto['resultado_aprovacao'] ?? '-') ?></dd>
-          <dt class="col-sm-4">Próxima ação</dt><dd class="col-sm-8"><?= formatar_data($projeto['proxima_acao_data']) ?></dd>
-          <dt class="col-sm-4">Próximo passo</dt><dd class="col-sm-8"><?= nl2br(h($projeto['proximo_passo'] ?? '-')) ?></dd>
-          <dt class="col-sm-4">Valor estimado</dt><dd class="col-sm-8"><?= formatar_valor($projeto['valor_estimado'] !== null ? (float)$projeto['valor_estimado'] : null) ?></dd>
-        </dl>
+<main class="fade container">
+  <a href="kanban.php" class="back-link"><?= icone('chevron-left', 15, '2.2') ?>Kanban</a>
+  <div class="page-header" style="align-items:flex-start">
+    <div style="display:flex;align-items:center;gap:14px">
+      <span class="avatar avatar-lg"><?= h(iniciais($projeto['cliente_nome'])) ?></span>
+      <div>
+        <h1 style="font-size:23px;margin-bottom:5px"><?= h($projeto['cliente_nome']) ?></h1>
+        <span class="badge" style="color:<?= h($projeto['etapa_cor']) ?>;background:color-mix(in srgb, <?= h($projeto['etapa_cor']) ?> 14%, transparent)">
+          <span class="badge-dot" style="background:<?= h($projeto['etapa_cor']) ?>"></span><?= h($projeto['etapa_nome']) ?>
+        </span>
       </div>
     </div>
-
-    <div class="card shadow-sm">
-      <div class="card-header fw-semibold">Contato</div>
-      <div class="card-body">
-        <dl class="row mb-0">
-          <dt class="col-sm-4">Telefone</dt><dd class="col-sm-8"><?= h($projeto['telefone'] ?? '-') ?></dd>
-          <dt class="col-sm-4">E-mail</dt><dd class="col-sm-8"><?= h($projeto['email'] ?? '-') ?></dd>
-          <dt class="col-sm-4">Link de atendimento</dt>
-          <dd class="col-sm-8">
-            <?php if ($projeto['link_atendimento']): ?>
-              <a href="<?= h($projeto['link_atendimento']) ?>" target="_blank" rel="noopener"><?= h($projeto['link_atendimento']) ?></a>
-            <?php else: ?>-<?php endif; ?>
-          </dd>
-        </dl>
-      </div>
+    <div style="display:flex;gap:10px">
+      <a href="cliente_form.php?id=<?= (int)$projeto['cliente_id'] ?>" class="btn btn-outline">Editar contato</a>
+      <a href="projeto_form.php?id=<?= (int)$projeto['id'] ?>" class="btn btn-primary"><?= icone('edit', 15) ?>Editar projeto</a>
     </div>
   </div>
 
-  <div class="col-lg-5">
-    <div class="card shadow-sm mb-3" id="notas">
-      <div class="card-header fw-semibold">Notas</div>
-      <div class="card-body">
-        <form method="post" class="mb-3">
-          <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
-          <textarea name="texto" class="form-control mb-2" rows="2" placeholder="Adicionar anotação..." required></textarea>
-          <button type="submit" class="btn btn-sm btn-primary">Adicionar</button>
-        </form>
-        <?php if (!$notas): ?>
-          <p class="text-muted small mb-0">Nenhuma nota ainda.</p>
-        <?php endif; ?>
-        <?php foreach ($notas as $n): ?>
-          <div class="border-bottom pb-2 mb-2">
-            <div class="small text-muted"><?= h($n['usuario_nome'] ?? 'Sistema') ?> - <?= date('d/m/Y H:i', strtotime($n['criado_em'])) ?></div>
-            <div><?= nl2br(h($n['texto'])) ?></div>
+  <div class="two-col">
+    <div class="stack-16">
+      <div class="card card-pad">
+        <h3 style="font-size:15px;font-weight:700;margin-bottom:16px">Dados do projeto</h3>
+        <div class="detail-grid">
+          <?php foreach ($campos as $label => $valor): ?>
+            <div class="detail-field">
+              <div class="label"><?= h($label) ?></div>
+              <div class="value"><?= h($valor) ?></div>
+            </div>
+          <?php endforeach; ?>
+        </div>
+        <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--border)">
+          <div class="detail-field">
+            <div class="label">Próximo passo</div>
+            <div class="value" style="font-weight:400;line-height:1.5"><?= nl2br(h($projeto['proximo_passo'] ?: '-')) ?></div>
           </div>
-        <?php endforeach; ?>
+        </div>
+      </div>
+
+      <div class="card card-pad">
+        <h3 style="font-size:15px;font-weight:700;margin-bottom:16px">Contato do cliente</h3>
+        <div class="stack-16" style="gap:13px">
+          <div class="contact-row">
+            <span class="icon-wrap"><?= icone('phone', 15) ?></span>
+            <span class="value"><?= h($projeto['telefone'] ?? '-') ?></span>
+          </div>
+          <div class="contact-row">
+            <span class="icon-wrap"><?= icone('mail', 15) ?></span>
+            <span class="value"><?= h($projeto['email'] ?? '-') ?></span>
+          </div>
+          <div class="contact-row">
+            <span class="icon-wrap"><?= icone('link', 15) ?></span>
+            <?php if ($projeto['link_atendimento']): ?>
+              <a href="<?= h($projeto['link_atendimento']) ?>" target="_blank" rel="noopener" class="value">Abrir atendimento →</a>
+            <?php else: ?>
+              <span class="value">-</span>
+            <?php endif; ?>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="card shadow-sm">
-      <div class="card-header fw-semibold">Histórico de etapas</div>
-      <ul class="list-group list-group-flush">
-        <?php foreach ($historico as $h): ?>
-          <li class="list-group-item small">
-            <?= h($h['etapa_anterior_nome'] ?? 'Criado') ?> &rarr; <strong><?= h($h['etapa_nova_nome']) ?></strong>
-            <div class="text-muted"><?= h($h['usuario_nome'] ?? 'Sistema') ?> - <?= date('d/m/Y H:i', strtotime($h['criado_em'])) ?></div>
-          </li>
-        <?php endforeach; ?>
-        <?php if (!$historico): ?>
-          <li class="list-group-item text-muted small">Sem histórico.</li>
-        <?php endif; ?>
-      </ul>
+    <div class="stack-16">
+      <div class="card card-pad" id="notas">
+        <h3 style="font-size:15px;font-weight:700;margin-bottom:14px">Notas da equipe</h3>
+        <form method="post" class="note-composer">
+          <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
+          <input type="text" name="texto" placeholder="Adicionar uma nota…" required>
+          <button type="submit" class="btn btn-primary btn-sm">Enviar</button>
+        </form>
+        <div>
+          <?php if (!$notas): ?><p style="font-size:13px;color:var(--muted)">Nenhuma nota ainda.</p><?php endif; ?>
+          <?php foreach ($notas as $n): ?>
+            <div class="note-item">
+              <span class="avatar" style="width:32px;height:32px;font-size:11.5px;background:<?= h(avatar_cor($n['usuario_nome'] ?? 'Sistema')) ?>"><?= h(iniciais($n['usuario_nome'] ?? 'Sistema')) ?></span>
+              <div style="flex:1">
+                <span class="note-author"><?= h($n['usuario_nome'] ?? 'Sistema') ?></span>
+                <span class="note-time"><?= date('d/m/Y H:i', strtotime($n['criado_em'])) ?></span>
+                <div class="note-text"><?= nl2br(h($n['texto'])) ?></div>
+              </div>
+            </div>
+          <?php endforeach; ?>
+        </div>
+      </div>
+
+      <div class="card card-pad">
+        <h3 style="font-size:15px;font-weight:700;margin-bottom:16px">Histórico de etapas</h3>
+        <?php if (!$historico): ?><p style="font-size:13px;color:var(--muted)">Sem histórico.</p><?php endif; ?>
+        <div class="timeline">
+          <?php foreach ($historico as $ev): ?>
+            <div class="timeline-item">
+              <span class="timeline-dot" style="background:<?= h($ev['etapa_nova_nome'] ? '#7c6cff' : '#7c6cff') ?>"></span>
+              <div class="timeline-text"><strong><?= h($ev['usuario_nome'] ?? 'Sistema') ?></strong> moveu <?= h($ev['etapa_anterior_nome'] ?? 'criação') ?> → <strong><?= h($ev['etapa_nova_nome']) ?></strong></div>
+              <div class="timeline-time"><?= date('d/m/Y H:i', strtotime($ev['criado_em'])) ?></div>
+            </div>
+          <?php endforeach; ?>
+        </div>
+      </div>
     </div>
   </div>
-</div>
-
+</main>
 <?php require __DIR__ . '/includes/footer.php'; ?>

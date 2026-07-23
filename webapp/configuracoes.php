@@ -71,176 +71,210 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $etapas = listar_etapas();
 $planos = listar_planos();
-$origens = listar_origens();
+$origensComContagem = $pdo->query("
+    SELECT o.*, COUNT(c.id) total_clientes FROM origens o
+    LEFT JOIN clientes c ON c.origem_id = o.id
+    GROUP BY o.id ORDER BY o.nome
+")->fetchAll();
 $usuarios = $pdo->query('SELECT * FROM usuarios ORDER BY nome')->fetchAll();
 
 $titulo_pagina = 'Configurações';
 require __DIR__ . '/includes/header.php';
+
+$tabDefs = [
+    'etapas' => 'Etapas do Kanban',
+    'planos' => 'Planos',
+    'origens' => 'Origens',
+    'usuarios' => 'Usuários',
+];
 ?>
+<main class="fade container-lg">
+  <h1 style="font-size:24px;font-weight:800;letter-spacing:-.02em;margin-bottom:3px">Configurações</h1>
+  <p style="font-size:14px;color:var(--muted);margin-bottom:22px">Gerencie as bases do sistema · área de administrador</p>
 
-<h1 class="h4 mb-3">Configurações</h1>
-<?php if ($erro): ?><div class="alert alert-danger"><?= h($erro) ?></div><?php endif; ?>
+  <?php if ($erro): ?><div class="login-error"><?= h($erro) ?></div><?php endif; ?>
 
-<ul class="nav nav-tabs mb-3">
-  <li class="nav-item"><a class="nav-link <?= $aba === 'etapas' ? 'active' : '' ?>" href="?aba=etapas">Etapas (Kanban)</a></li>
-  <li class="nav-item"><a class="nav-link <?= $aba === 'planos' ? 'active' : '' ?>" href="?aba=planos">Planos</a></li>
-  <li class="nav-item"><a class="nav-link <?= $aba === 'origens' ? 'active' : '' ?>" href="?aba=origens">Origens</a></li>
-  <li class="nav-item"><a class="nav-link <?= $aba === 'usuarios' ? 'active' : '' ?>" href="?aba=usuarios">Usuários</a></li>
-</ul>
+  <div class="tabs">
+    <?php foreach ($tabDefs as $chave => $label): ?>
+      <a href="?aba=<?= $chave ?>" class="tab-btn <?= $aba === $chave ? 'active' : '' ?>"><?= h($label) ?></a>
+    <?php endforeach; ?>
+  </div>
 
-<?php if ($aba === 'etapas'): ?>
-  <div class="card shadow-sm mb-3">
-    <div class="card-body">
-      <table class="table align-middle">
-        <thead><tr><th>Ordem</th><th>Nome</th><th>Cor</th><th>Final?</th><th></th></tr></thead>
-        <tbody>
-        <?php foreach ($etapas as $e): ?>
-          <form method="post">
-            <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
-            <input type="hidden" name="entidade" value="etapa">
-            <input type="hidden" name="id" value="<?= (int)$e['id'] ?>">
+  <div class="card">
+    <?php if ($aba === 'etapas'): ?>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Ordem</th><th>Nome da etapa</th><th>Cor</th><th>Etapa final</th><th></th></tr></thead>
+          <tbody>
+          <?php foreach ($etapas as $e): ?>
             <tr>
-              <td style="width:90px"><input type="number" name="ordem" class="form-control form-control-sm" value="<?= (int)$e['ordem'] ?>"></td>
-              <td><input type="text" name="nome" class="form-control form-control-sm" value="<?= h($e['nome']) ?>"></td>
-              <td style="width:70px"><input type="color" name="cor" class="form-control form-control-sm" value="<?= h($e['cor']) ?>"></td>
-              <td style="width:70px" class="text-center"><input type="checkbox" name="is_final" <?= $e['is_final'] ? 'checked' : '' ?>></td>
-              <td class="text-end" style="white-space:nowrap">
-                <button type="submit" name="acao" value="editar" class="btn btn-sm btn-outline-primary">Salvar</button>
-                <button type="submit" name="acao" value="excluir" class="btn btn-sm btn-outline-danger" onclick="return confirm('Excluir esta etapa?')">Excluir</button>
+              <td style="width:70px">
+                <form method="post" id="etapa-<?= (int)$e['id'] ?>">
+                  <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
+                  <input type="hidden" name="entidade" value="etapa">
+                  <input type="hidden" name="id" value="<?= (int)$e['id'] ?>">
+                  <input type="number" name="ordem" form="etapa-<?= (int)$e['id'] ?>" class="cell-inline-input" style="width:56px" value="<?= (int)$e['ordem'] ?>">
+                </form>
+              </td>
+              <td><input type="text" name="nome" form="etapa-<?= (int)$e['id'] ?>" class="cell-inline-input" value="<?= h($e['nome']) ?>"></td>
+              <td>
+                <span style="display:inline-flex;align-items:center;gap:8px">
+                  <input type="color" name="cor" form="etapa-<?= (int)$e['id'] ?>" value="<?= h($e['cor']) ?>" style="width:22px;height:22px;padding:0;border:none;border-radius:7px;background:none;cursor:pointer">
+                  <span style="font-size:12px;color:var(--faint);font-variant-numeric:tabular-nums"><?= h(strtoupper($e['cor'])) ?></span>
+                </span>
+              </td>
+              <td>
+                <label class="toggle">
+                  <input type="checkbox" name="is_final" form="etapa-<?= (int)$e['id'] ?>" <?= $e['is_final'] ? 'checked' : '' ?>>
+                  <span class="toggle-track"></span>
+                  <span class="toggle-thumb"></span>
+                </label>
+              </td>
+              <td style="text-align:right;white-space:nowrap">
+                <button type="submit" name="acao" value="editar" form="etapa-<?= (int)$e['id'] ?>" class="btn btn-outline btn-sm">Salvar</button>
+                <button type="submit" name="acao" value="excluir" form="etapa-<?= (int)$e['id'] ?>" class="icon-action danger" title="Remover" onclick="return confirm('Excluir esta etapa?')"><?= icone('trash', 14) ?></button>
               </td>
             </tr>
-          </form>
-        <?php endforeach; ?>
-        </tbody>
-      </table>
-      <form method="post" class="row g-2 align-items-end border-top pt-3">
+          <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+      <form method="post" class="table-add-row">
         <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
         <input type="hidden" name="entidade" value="etapa">
         <input type="hidden" name="acao" value="criar">
-        <div class="col-auto"><input type="number" name="ordem" class="form-control form-control-sm" placeholder="Ordem" value="<?= count($etapas) + 1 ?>" style="width:90px"></div>
-        <div class="col"><input type="text" name="nome" class="form-control form-control-sm" placeholder="Nova etapa" required></div>
-        <div class="col-auto"><input type="color" name="cor" class="form-control form-control-sm" value="#6c757d" style="width:70px"></div>
-        <div class="col-auto"><button class="btn btn-sm btn-primary" type="submit">Adicionar etapa</button></div>
+        <input type="number" name="ordem" placeholder="Ordem" value="<?= count($etapas) + 1 ?>" style="width:80px">
+        <input type="text" name="nome" placeholder="Nome da nova etapa" style="flex:1;min-width:160px" required>
+        <input type="color" name="cor" value="#7c6cff" style="width:42px;height:38px;padding:2px;cursor:pointer">
+        <button type="submit" class="btn btn-primary btn-sm"><?= icone('plus', 15, '2.4') ?>Adicionar etapa</button>
       </form>
-    </div>
-  </div>
 
-<?php elseif ($aba === 'planos'): ?>
-  <div class="card shadow-sm mb-3">
-    <div class="card-body">
-      <table class="table align-middle">
-        <thead><tr><th>Nome</th><th>Posts/mês</th><th>Valor padrão</th><th></th></tr></thead>
-        <tbody>
-        <?php foreach ($planos as $p): ?>
-          <form method="post">
-            <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
-            <input type="hidden" name="entidade" value="plano">
-            <input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
+    <?php elseif ($aba === 'planos'): ?>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Plano</th><th>Posts / mês</th><th>Valor padrão</th><th></th></tr></thead>
+          <tbody>
+          <?php foreach ($planos as $p): ?>
             <tr>
-              <td><input type="text" name="nome" class="form-control form-control-sm" value="<?= h($p['nome']) ?>"></td>
-              <td style="width:120px"><input type="number" name="posts_por_mes" class="form-control form-control-sm" value="<?= h((string)($p['posts_por_mes'] ?? '')) ?>"></td>
-              <td style="width:140px"><input type="text" name="valor_padrao" class="form-control form-control-sm" value="<?= h((string)($p['valor_padrao'] ?? '')) ?>"></td>
-              <td class="text-end" style="white-space:nowrap">
-                <button type="submit" name="acao" value="editar" class="btn btn-sm btn-outline-primary">Salvar</button>
-                <button type="submit" name="acao" value="excluir" class="btn btn-sm btn-outline-danger" onclick="return confirm('Excluir este plano?')">Excluir</button>
+              <td>
+                <form method="post" id="plano-<?= (int)$p['id'] ?>">
+                  <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
+                  <input type="hidden" name="entidade" value="plano">
+                  <input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
+                </form>
+                <input type="text" name="nome" form="plano-<?= (int)$p['id'] ?>" class="cell-inline-input" value="<?= h($p['nome']) ?>">
+              </td>
+              <td><input type="number" name="posts_por_mes" form="plano-<?= (int)$p['id'] ?>" class="cell-inline-input" style="width:80px" value="<?= h((string)($p['posts_por_mes'] ?? '')) ?>"></td>
+              <td><input type="text" name="valor_padrao" form="plano-<?= (int)$p['id'] ?>" class="cell-inline-input" style="width:130px" value="<?= h((string)($p['valor_padrao'] ?? '')) ?>"></td>
+              <td style="text-align:right;white-space:nowrap">
+                <button type="submit" name="acao" value="editar" form="plano-<?= (int)$p['id'] ?>" class="btn btn-outline btn-sm">Salvar</button>
+                <button type="submit" name="acao" value="excluir" form="plano-<?= (int)$p['id'] ?>" class="icon-action danger" title="Remover" onclick="return confirm('Excluir este plano?')"><?= icone('trash', 14) ?></button>
               </td>
             </tr>
-          </form>
-        <?php endforeach; ?>
-        </tbody>
-      </table>
-      <form method="post" class="row g-2 align-items-end border-top pt-3">
+          <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+      <form method="post" class="table-add-row">
         <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
         <input type="hidden" name="entidade" value="plano">
         <input type="hidden" name="acao" value="criar">
-        <div class="col"><input type="text" name="nome" class="form-control form-control-sm" placeholder="Novo plano" required></div>
-        <div class="col-auto"><input type="number" name="posts_por_mes" class="form-control form-control-sm" placeholder="Posts/mês" style="width:120px"></div>
-        <div class="col-auto"><input type="text" name="valor_padrao" class="form-control form-control-sm" placeholder="Valor R$" style="width:120px"></div>
-        <div class="col-auto"><button class="btn btn-sm btn-primary" type="submit">Adicionar plano</button></div>
+        <input type="text" name="nome" placeholder="Nome do plano" style="flex:1;min-width:140px" required>
+        <input type="number" name="posts_por_mes" placeholder="Posts" style="width:90px">
+        <input type="text" name="valor_padrao" placeholder="R$ 0,00" style="width:120px">
+        <button type="submit" class="btn btn-primary btn-sm"><?= icone('plus', 15, '2.4') ?>Adicionar plano</button>
       </form>
-    </div>
-  </div>
 
-<?php elseif ($aba === 'origens'): ?>
-  <div class="card shadow-sm mb-3">
-    <div class="card-body">
-      <table class="table align-middle">
-        <thead><tr><th>Nome</th><th></th></tr></thead>
-        <tbody>
-        <?php foreach ($origens as $o): ?>
-          <form method="post">
-            <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
-            <input type="hidden" name="entidade" value="origem">
-            <input type="hidden" name="id" value="<?= (int)$o['id'] ?>">
+    <?php elseif ($aba === 'origens'): ?>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Origem</th><th>Clientes</th><th></th></tr></thead>
+          <tbody>
+          <?php foreach ($origensComContagem as $o): ?>
             <tr>
-              <td><input type="text" name="nome" class="form-control form-control-sm" value="<?= h($o['nome']) ?>"></td>
-              <td class="text-end" style="white-space:nowrap">
-                <button type="submit" name="acao" value="editar" class="btn btn-sm btn-outline-primary">Salvar</button>
-                <button type="submit" name="acao" value="excluir" class="btn btn-sm btn-outline-danger" onclick="return confirm('Excluir esta origem?')">Excluir</button>
+              <td>
+                <form method="post" id="origem-<?= (int)$o['id'] ?>">
+                  <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
+                  <input type="hidden" name="entidade" value="origem">
+                  <input type="hidden" name="id" value="<?= (int)$o['id'] ?>">
+                </form>
+                <input type="text" name="nome" form="origem-<?= (int)$o['id'] ?>" class="cell-inline-input" value="<?= h($o['nome']) ?>">
+              </td>
+              <td><span style="font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums"><?= (int)$o['total_clientes'] ?></span></td>
+              <td style="text-align:right;white-space:nowrap">
+                <button type="submit" name="acao" value="editar" form="origem-<?= (int)$o['id'] ?>" class="btn btn-outline btn-sm">Salvar</button>
+                <button type="submit" name="acao" value="excluir" form="origem-<?= (int)$o['id'] ?>" class="icon-action danger" title="Remover" onclick="return confirm('Excluir esta origem?')"><?= icone('trash', 14) ?></button>
               </td>
             </tr>
-          </form>
-        <?php endforeach; ?>
-        </tbody>
-      </table>
-      <form method="post" class="row g-2 align-items-end border-top pt-3">
+          <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+      <form method="post" class="table-add-row">
         <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
         <input type="hidden" name="entidade" value="origem">
         <input type="hidden" name="acao" value="criar">
-        <div class="col"><input type="text" name="nome" class="form-control form-control-sm" placeholder="Nova origem" required></div>
-        <div class="col-auto"><button class="btn btn-sm btn-primary" type="submit">Adicionar origem</button></div>
+        <input type="text" name="nome" placeholder="Nome da origem" style="flex:1;max-width:280px" required>
+        <button type="submit" class="btn btn-primary btn-sm"><?= icone('plus', 15, '2.4') ?>Adicionar origem</button>
       </form>
-    </div>
-  </div>
 
-<?php elseif ($aba === 'usuarios'): ?>
-  <div class="card shadow-sm mb-3">
-    <div class="card-body">
-      <table class="table align-middle">
-        <thead><tr><th>Nome</th><th>E-mail</th><th>Papel</th><th>Nova senha</th><th>Ativo</th><th></th></tr></thead>
-        <tbody>
-        <?php foreach ($usuarios as $u): ?>
-          <form method="post">
-            <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
-            <input type="hidden" name="entidade" value="usuario">
-            <input type="hidden" name="id" value="<?= (int)$u['id'] ?>">
+    <?php elseif ($aba === 'usuarios'): ?>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Usuário</th><th>Papel</th><th>Nova senha</th><th>Status</th><th style="text-align:right">Ações</th></tr></thead>
+          <tbody>
+          <?php foreach ($usuarios as $u): ?>
             <tr>
-              <td><input type="text" name="nome" class="form-control form-control-sm" value="<?= h($u['nome']) ?>"></td>
-              <td><input type="email" name="email" class="form-control form-control-sm" value="<?= h($u['email']) ?>"></td>
-              <td style="width:130px">
-                <select name="papel" class="form-select form-select-sm">
+              <td>
+                <form method="post" id="usuario-<?= (int)$u['id'] ?>">
+                  <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
+                  <input type="hidden" name="entidade" value="usuario">
+                  <input type="hidden" name="id" value="<?= (int)$u['id'] ?>">
+                </form>
+                <div style="display:flex;align-items:center;gap:11px">
+                  <span class="avatar" style="width:34px;height:34px;font-size:12.5px;background:<?= h(avatar_cor($u['nome'])) ?>"><?= h(iniciais($u['nome'])) ?></span>
+                  <div>
+                    <input type="text" name="nome" form="usuario-<?= (int)$u['id'] ?>" class="cell-inline-input" style="font-weight:700" value="<?= h($u['nome']) ?>">
+                    <input type="email" name="email" form="usuario-<?= (int)$u['id'] ?>" class="cell-inline-input" style="font-size:12px;color:var(--muted)" value="<?= h($u['email']) ?>">
+                  </div>
+                </div>
+              </td>
+              <td style="width:120px">
+                <select name="papel" form="usuario-<?= (int)$u['id'] ?>" class="cell-inline-input">
                   <option value="equipe" <?= $u['papel'] === 'equipe' ? 'selected' : '' ?>>Equipe</option>
                   <option value="admin" <?= $u['papel'] === 'admin' ? 'selected' : '' ?>>Admin</option>
                 </select>
               </td>
-              <td style="width:150px"><input type="password" name="senha" class="form-control form-control-sm" placeholder="(manter atual)"></td>
-              <td class="text-center"><?= $u['ativo'] ? '<span class="badge text-bg-success">sim</span>' : '<span class="badge text-bg-secondary">não</span>' ?></td>
-              <td class="text-end" style="white-space:nowrap">
-                <button type="submit" name="acao" value="editar" class="btn btn-sm btn-outline-primary">Salvar</button>
-                <button type="submit" name="acao" value="alternar_ativo" class="btn btn-sm btn-outline-warning">Ativar/Desativar</button>
+              <td style="width:150px"><input type="password" name="senha" form="usuario-<?= (int)$u['id'] ?>" class="cell-inline-input" placeholder="(manter atual)"></td>
+              <td>
+                <span style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:<?= $u['ativo'] ? 'var(--ok)' : 'var(--faint)' ?>">
+                  <span style="width:7px;height:7px;border-radius:50%;background:<?= $u['ativo'] ? 'var(--ok)' : 'var(--faint)' ?>"></span><?= $u['ativo'] ? 'Ativo' : 'Inativo' ?>
+                </span>
+              </td>
+              <td style="text-align:right;white-space:nowrap">
+                <button type="submit" name="acao" value="editar" form="usuario-<?= (int)$u['id'] ?>" class="btn btn-outline btn-sm">Salvar</button>
+                <button type="submit" name="acao" value="alternar_ativo" form="usuario-<?= (int)$u['id'] ?>" class="btn btn-outline btn-sm" style="color:<?= $u['ativo'] ? 'var(--danger)' : 'var(--ok)' ?>"><?= $u['ativo'] ? 'Desativar' : 'Ativar' ?></button>
               </td>
             </tr>
-          </form>
-        <?php endforeach; ?>
-        </tbody>
-      </table>
-      <form method="post" class="row g-2 align-items-end border-top pt-3">
+          <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+      <form method="post" class="table-add-row">
         <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
         <input type="hidden" name="entidade" value="usuario">
         <input type="hidden" name="acao" value="criar">
-        <div class="col"><input type="text" name="nome" class="form-control form-control-sm" placeholder="Nome" required></div>
-        <div class="col"><input type="email" name="email" class="form-control form-control-sm" placeholder="E-mail" required></div>
-        <div class="col-auto">
-          <select name="papel" class="form-select form-select-sm">
-            <option value="equipe">Equipe</option>
-            <option value="admin">Admin</option>
-          </select>
-        </div>
-        <div class="col"><input type="password" name="senha" class="form-control form-control-sm" placeholder="Senha" required></div>
-        <div class="col-auto"><button class="btn btn-sm btn-primary" type="submit">Adicionar usuário</button></div>
+        <input type="text" name="nome" placeholder="Nome" style="flex:1;min-width:120px" required>
+        <input type="email" name="email" placeholder="E-mail" style="flex:1.4;min-width:160px" required>
+        <select name="papel">
+          <option value="equipe">Equipe</option>
+          <option value="admin">Admin</option>
+        </select>
+        <input type="password" name="senha" placeholder="Senha" required>
+        <button type="submit" class="btn btn-primary btn-sm"><?= icone('plus', 15, '2.4') ?>Adicionar usuário</button>
       </form>
-    </div>
+    <?php endif; ?>
   </div>
-<?php endif; ?>
+</main>
 
 <?php require __DIR__ . '/includes/footer.php'; ?>

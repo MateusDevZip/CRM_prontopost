@@ -50,54 +50,52 @@ $origens = listar_origens();
 $titulo_pagina = $id ? 'Editar contato' : 'Novo contato';
 require __DIR__ . '/includes/header.php';
 ?>
+<main class="fade container-sm">
+  <a href="clientes.php" class="back-link"><?= icone('chevron-left', 15, '2.2') ?>Contatos</a>
+  <h1 style="font-size:23px;font-weight:800;letter-spacing:-.02em;margin-bottom:3px"><?= h($titulo_pagina) ?></h1>
+  <p style="font-size:14px;color:var(--muted);margin-bottom:24px"><?= $id ? h($cliente['nome']) : 'Cadastre um novo cliente.' ?></p>
 
-<div class="row justify-content-center">
-  <div class="col-lg-7">
-    <h1 class="h4 mb-3"><?= h($titulo_pagina) ?></h1>
-    <?php if ($erro): ?><div class="alert alert-danger"><?= h($erro) ?></div><?php endif; ?>
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <form method="post">
-          <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
-          <div class="mb-3">
-            <label class="form-label">Nome *</label>
-            <input type="text" name="nome" class="form-control" required value="<?= h($cliente['nome']) ?>">
-          </div>
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Telefone</label>
-              <input type="text" name="telefone" class="form-control" value="<?= h($cliente['telefone']) ?>">
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">E-mail</label>
-              <input type="email" name="email" class="form-control" value="<?= h($cliente['email']) ?>">
-            </div>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Link de atendimento (egestor/zap)</label>
-            <input type="text" name="link_atendimento" class="form-control" value="<?= h($cliente['link_atendimento']) ?>">
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Origem</label>
-            <select name="origem_id" class="form-select">
-              <option value="">-</option>
-              <?php foreach ($origens as $o): ?>
-                <option value="<?= (int)$o['id'] ?>" <?= $cliente['origem_id'] == $o['id'] ? 'selected' : '' ?>><?= h($o['nome']) ?></option>
-              <?php endforeach; ?>
-            </select>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Observações</label>
-            <textarea name="observacoes" class="form-control" rows="3"><?= h($cliente['observacoes']) ?></textarea>
-          </div>
-          <div class="d-flex justify-content-between">
-            <a href="clientes.php" class="btn btn-outline-secondary">Cancelar</a>
-            <button type="submit" class="btn btn-primary">Salvar</button>
-          </div>
-        </form>
+  <?php if ($erro): ?><div class="login-error"><?= h($erro) ?></div><?php endif; ?>
+
+  <div class="card card-pad-lg">
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
+      <div class="field-grid">
+        <div class="field field-span-2">
+          <label>Nome do cliente *</label>
+          <input type="text" name="nome" required value="<?= h($cliente['nome']) ?>">
+        </div>
+        <div class="field">
+          <label>Telefone</label>
+          <input type="text" name="telefone" value="<?= h($cliente['telefone']) ?>">
+        </div>
+        <div class="field">
+          <label>E-mail</label>
+          <input type="email" name="email" value="<?= h($cliente['email']) ?>">
+        </div>
+        <div class="field">
+          <label>Link de atendimento</label>
+          <input type="text" name="link_atendimento" value="<?= h($cliente['link_atendimento']) ?>">
+        </div>
+        <div class="field">
+          <label>Origem</label>
+          <select name="origem_id">
+            <option value="">-</option>
+            <?php foreach ($origens as $o): ?>
+              <option value="<?= (int)$o['id'] ?>" <?= $cliente['origem_id'] == $o['id'] ? 'selected' : '' ?>><?= h($o['nome']) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+        <div class="field field-span-2">
+          <label>Observações</label>
+          <textarea name="observacoes" rows="4"><?= h($cliente['observacoes']) ?></textarea>
+        </div>
       </div>
-    </div>
+      <div class="form-actions">
+        <a href="clientes.php" class="btn btn-outline">Cancelar</a>
+        <button type="submit" class="btn btn-primary">Salvar</button>
+      </div>
+    </form>
   </div>
-</div>
-
+</main>
 <?php require __DIR__ . '/includes/footer.php'; ?>

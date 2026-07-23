@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  board.querySelectorAll('.kanban-coluna').forEach(function (coluna) {
+  board.querySelectorAll('.kanban-column').forEach(function (coluna) {
     coluna.addEventListener('dragover', function (e) {
       e.preventDefault();
       coluna.classList.add('drag-over');
@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       const projetoId = cardArrastado.dataset.projetoId;
       const etapaId = coluna.dataset.etapaId;
-      const container = coluna.querySelector('.kanban-cards');
+      const container = coluna.querySelector('.kanban-column-body');
       container.appendChild(cardArrastado);
 
       fetch('api/mover_etapa.php', {
@@ -59,9 +59,9 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   function atualizarContadores() {
-    document.querySelectorAll('.kanban-coluna').forEach(function (coluna) {
+    document.querySelectorAll('.kanban-column').forEach(function (coluna) {
       const qtd = coluna.querySelectorAll('.kanban-card').length;
-      coluna.querySelector('.badge').textContent = qtd;
+      coluna.querySelector('.kanban-column-count').textContent = qtd;
     });
   }
 });

@@ -90,109 +90,104 @@ $titulo_pagina = $id ? 'Editar projeto' : 'Novo projeto';
 require __DIR__ . '/includes/header.php';
 ?>
 
-<div class="row justify-content-center">
-  <div class="col-lg-8">
-    <h1 class="h4 mb-3"><?= h($titulo_pagina) ?></h1>
-    <?php if ($erro): ?><div class="alert alert-danger"><?= h($erro) ?></div><?php endif; ?>
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <form method="post">
-          <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
+<main class="fade container-md">
+  <a href="<?= $id ? 'projeto_view.php?id=' . (int)$id : 'kanban.php' ?>" class="back-link"><?= icone('chevron-left', 15, '2.2') ?>Voltar</a>
+  <h1 style="font-size:23px;font-weight:800;letter-spacing:-.02em;margin-bottom:3px"><?= h($titulo_pagina) ?></h1>
+  <p style="font-size:14px;color:var(--muted);margin-bottom:24px">Vincule um cliente e configure a produção do mês.</p>
 
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Cliente *</label>
-              <select name="cliente_id" class="form-select" required <?= $clienteIdFixo ? 'disabled' : '' ?>>
-                <option value="">Selecione</option>
-                <?php foreach ($clientes as $c): ?>
-                  <option value="<?= (int)$c['id'] ?>" <?= $projeto['cliente_id'] == $c['id'] ? 'selected' : '' ?>><?= h($c['nome']) ?></option>
-                <?php endforeach; ?>
-              </select>
-              <?php if ($clienteIdFixo): ?>
-                <input type="hidden" name="cliente_id" value="<?= (int)$clienteIdFixo ?>">
-              <?php endif; ?>
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Etapa *</label>
-              <select name="etapa_id" class="form-select" required>
-                <?php foreach ($etapas as $e): ?>
-                  <option value="<?= (int)$e['id'] ?>" <?= $projeto['etapa_id'] == $e['id'] ? 'selected' : '' ?>><?= h($e['nome']) ?></option>
-                <?php endforeach; ?>
-              </select>
-            </div>
-          </div>
+  <?php if ($erro): ?><div class="login-error"><?= h($erro) ?></div><?php endif; ?>
 
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Plano</label>
-              <select name="plano_id" class="form-select">
-                <option value="">-</option>
-                <?php foreach ($planos as $p): ?>
-                  <option value="<?= (int)$p['id'] ?>" <?= $projeto['plano_id'] == $p['id'] ? 'selected' : '' ?>><?= h($p['nome']) ?></option>
-                <?php endforeach; ?>
-              </select>
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Responsável</label>
-              <select name="responsavel_id" class="form-select">
-                <option value="">-</option>
-                <?php foreach ($usuarios as $u): ?>
-                  <option value="<?= (int)$u['id'] ?>" <?= $projeto['responsavel_id'] == $u['id'] ? 'selected' : '' ?>><?= h($u['nome']) ?></option>
-                <?php endforeach; ?>
-              </select>
-            </div>
-          </div>
+  <div class="card card-pad-lg">
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
 
-          <div class="row">
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Chegou em</label>
-              <input type="date" name="chegou_em" class="form-control" value="<?= h($projeto['chegou_em']) ?>">
-            </div>
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Mês de conteúdo</label>
-              <input type="month" name="mes_conteudo" class="form-control" value="<?= h($projeto['mes_conteudo']) ?>">
-            </div>
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Posts no mês</label>
-              <input type="number" name="posts_no_mes" class="form-control" value="<?= h((string)($projeto['posts_no_mes'] ?? '')) ?>">
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Aprovação do 1º post</label>
-              <input type="date" name="aprovacao_primeiro_post" class="form-control" value="<?= h($projeto['aprovacao_primeiro_post']) ?>">
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Resultado da aprovação</label>
-              <input type="text" name="resultado_aprovacao" class="form-control" value="<?= h($projeto['resultado_aprovacao']) ?>">
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Próxima ação (data)</label>
-              <input type="date" name="proxima_acao_data" class="form-control" value="<?= h($projeto['proxima_acao_data']) ?>">
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Valor estimado (R$)</label>
-              <input type="text" name="valor_estimado" class="form-control" value="<?= h((string)($projeto['valor_estimado'] ?? '')) ?>">
-            </div>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Próximo passo</label>
-            <textarea name="proximo_passo" class="form-control" rows="3"><?= h($projeto['proximo_passo']) ?></textarea>
-          </div>
-
-          <div class="d-flex justify-content-between">
-            <a href="<?= $id ? 'projeto_view.php?id=' . (int)$id : 'kanban.php' ?>" class="btn btn-outline-secondary">Cancelar</a>
-            <button type="submit" class="btn btn-primary">Salvar</button>
-          </div>
-        </form>
+      <div class="form-section-label">Geral</div>
+      <div class="field-grid-3" style="margin-bottom:24px">
+        <div class="field field-span-2">
+          <label>Cliente *</label>
+          <select name="cliente_id" required <?= $clienteIdFixo ? 'disabled' : '' ?>>
+            <option value="">Selecione</option>
+            <?php foreach ($clientes as $c): ?>
+              <option value="<?= (int)$c['id'] ?>" <?= $projeto['cliente_id'] == $c['id'] ? 'selected' : '' ?>><?= h($c['nome']) ?></option>
+            <?php endforeach; ?>
+          </select>
+          <?php if ($clienteIdFixo): ?>
+            <input type="hidden" name="cliente_id" value="<?= (int)$clienteIdFixo ?>">
+          <?php endif; ?>
+        </div>
+        <div class="field">
+          <label>Etapa *</label>
+          <select name="etapa_id" required>
+            <?php foreach ($etapas as $e): ?>
+              <option value="<?= (int)$e['id'] ?>" <?= $projeto['etapa_id'] == $e['id'] ? 'selected' : '' ?>><?= h($e['nome']) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+        <div class="field">
+          <label>Plano</label>
+          <select name="plano_id">
+            <option value="">-</option>
+            <?php foreach ($planos as $p): ?>
+              <option value="<?= (int)$p['id'] ?>" <?= $projeto['plano_id'] == $p['id'] ? 'selected' : '' ?>><?= h($p['nome']) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+        <div class="field">
+          <label>Responsável</label>
+          <select name="responsavel_id">
+            <option value="">-</option>
+            <?php foreach ($usuarios as $u): ?>
+              <option value="<?= (int)$u['id'] ?>" <?= $projeto['responsavel_id'] == $u['id'] ? 'selected' : '' ?>><?= h($u['nome']) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </div>
       </div>
-    </div>
+
+      <div class="form-section-label">Datas &amp; conteúdo</div>
+      <div class="field-grid-3" style="margin-bottom:24px">
+        <div class="field">
+          <label>Chegou em</label>
+          <input type="date" name="chegou_em" value="<?= h($projeto['chegou_em']) ?>">
+        </div>
+        <div class="field">
+          <label>Aprovação 1º post</label>
+          <input type="date" name="aprovacao_primeiro_post" value="<?= h($projeto['aprovacao_primeiro_post']) ?>">
+        </div>
+        <div class="field">
+          <label>Próxima ação</label>
+          <input type="date" name="proxima_acao_data" value="<?= h($projeto['proxima_acao_data']) ?>">
+        </div>
+        <div class="field">
+          <label>Mês de conteúdo</label>
+          <input type="month" name="mes_conteudo" value="<?= h($projeto['mes_conteudo']) ?>">
+        </div>
+        <div class="field">
+          <label>Posts no mês</label>
+          <input type="number" name="posts_no_mes" value="<?= h((string)($projeto['posts_no_mes'] ?? '')) ?>">
+        </div>
+        <div class="field">
+          <label>Resultado da aprovação</label>
+          <input type="text" name="resultado_aprovacao" value="<?= h($projeto['resultado_aprovacao']) ?>">
+        </div>
+      </div>
+
+      <div class="field-grid" style="grid-template-columns:1fr 220px">
+        <div class="field">
+          <label>Próximo passo</label>
+          <textarea name="proximo_passo" rows="3"><?= h($projeto['proximo_passo']) ?></textarea>
+        </div>
+        <div class="field">
+          <label>Valor estimado (R$)</label>
+          <input type="text" name="valor_estimado" value="<?= h((string)($projeto['valor_estimado'] ?? '')) ?>">
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <a href="<?= $id ? 'projeto_view.php?id=' . (int)$id : 'kanban.php' ?>" class="btn btn-outline">Cancelar</a>
+        <button type="submit" class="btn btn-primary">Salvar</button>
+      </div>
+    </form>
   </div>
-</div>
+</main>
 
 <?php require __DIR__ . '/includes/footer.php'; ?>

@@ -3,42 +3,81 @@ require_once __DIR__ . '/functions.php';
 $usuario = usuario_logado();
 $pagina_atual = basename($_SERVER['SCRIPT_NAME']);
 
-function nav_ativo(string $arquivo, string $atual): string
-{
-    return $arquivo === $atual ? 'active' : '';
-}
+$grupoPorPagina = [
+    'dashboard.php' => 'dashboard.php',
+    'kanban.php' => 'kanban.php',
+    'projeto_form.php' => 'kanban.php',
+    'projeto_view.php' => 'kanban.php',
+    'clientes.php' => 'clientes.php',
+    'cliente_form.php' => 'clientes.php',
+    'configuracoes.php' => 'configuracoes.php',
+];
+$grupoAtivo = $grupoPorPagina[$pagina_atual] ?? $pagina_atual;
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title><?= h($titulo_pagina ?? 'CRM ProntoPost') ?> - CRM ProntoPost</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<title><?= h($titulo_pagina ?? 'CRM ProntoPost') ?> · ProntoPost</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link href="assets/css/app.css" rel="stylesheet">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('pp-theme');
+    if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {}
+})();
+</script>
 </head>
 <body>
 <?php if ($usuario): ?>
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
-  <div class="container-fluid">
-    <a class="navbar-brand fw-bold" href="dashboard.php">ProntoPost CRM</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
-      <span class="navbar-toggler-icon"></span>
+<header class="topbar">
+  <a href="dashboard.php" class="topbar-brand">
+    <span class="topbar-logo">🤌</span>
+    <span class="topbar-brand-name">ProntoPost</span>
+  </a>
+
+  <nav class="topbar-nav">
+    <a href="dashboard.php" class="topbar-nav-item <?= $grupoAtivo === 'dashboard.php' ? 'active' : '' ?>">Dashboard</a>
+    <a href="kanban.php" class="topbar-nav-item <?= $grupoAtivo === 'kanban.php' ? 'active' : '' ?>">Kanban</a>
+    <a href="clientes.php" class="topbar-nav-item <?= $grupoAtivo === 'clientes.php' ? 'active' : '' ?>">Contatos</a>
+    <?php if ($usuario['papel'] === 'admin'): ?>
+      <a href="configuracoes.php" class="topbar-nav-item <?= $grupoAtivo === 'configuracoes.php' ? 'active' : '' ?>">Configurações</a>
+    <?php endif; ?>
+  </nav>
+
+  <div class="topbar-actions">
+    <form action="clientes.php" method="get" class="topbar-search">
+      <?= icone('search', 15, '2') ?>
+      <input type="text" name="q" placeholder="Buscar clientes…">
+    </form>
+    <button type="button" class="icon-btn" id="theme-toggle-btn" title="Alternar tema">
+      <span id="theme-icon-sun" style="display:flex"><?= icone('sun', 17) ?></span>
+      <span id="theme-icon-moon" style="display:none"><?= icone('moon', 17) ?></span>
     </button>
-    <div class="collapse navbar-collapse" id="navMenu">
-      <ul class="navbar-nav me-auto">
-        <li class="nav-item"><a class="nav-link <?= nav_ativo('dashboard.php', $pagina_atual) ?>" href="dashboard.php">Dashboard</a></li>
-        <li class="nav-item"><a class="nav-link <?= nav_ativo('kanban.php', $pagina_atual) ?>" href="kanban.php">Kanban</a></li>
-        <li class="nav-item"><a class="nav-link <?= nav_ativo('clientes.php', $pagina_atual) ?>" href="clientes.php">Contatos</a></li>
-        <?php if ($usuario['papel'] === 'admin'): ?>
-        <li class="nav-item"><a class="nav-link <?= nav_ativo('configuracoes.php', $pagina_atual) ?>" href="configuracoes.php">Configurações</a></li>
-        <?php endif; ?>
-      </ul>
-      <span class="navbar-text text-light me-3"><?= h($usuario['nome']) ?></span>
-      <a href="logout.php" class="btn btn-outline-light btn-sm">Sair</a>
-    </div>
+    <span class="user-chip">
+      <span class="avatar" style="width:28px;height:28px;font-size:12px;background:<?= h(avatar_cor($usuario['nome'])) ?>"><?= h(iniciais($usuario['nome'])) ?></span>
+      <span class="user-chip-name"><?= h($usuario['nome']) ?></span>
+    </span>
+    <a href="logout.php" class="logout-link">Sair</a>
   </div>
-</nav>
+</header>
+<script>
+(function () {
+  var atual = document.documentElement.getAttribute('data-theme') || 'dark';
+  document.getElementById('theme-icon-sun').style.display = atual === 'dark' ? 'flex' : 'none';
+  document.getElementById('theme-icon-moon').style.display = atual === 'light' ? 'flex' : 'none';
+  document.getElementById('theme-toggle-btn').addEventListener('click', function () {
+    var novo = (document.documentElement.getAttribute('data-theme') || 'dark') === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', novo);
+    try { localStorage.setItem('pp-theme', novo); } catch (e) {}
+    document.getElementById('theme-icon-sun').style.display = novo === 'dark' ? 'flex' : 'none';
+    document.getElementById('theme-icon-moon').style.display = novo === 'light' ? 'flex' : 'none';
+  });
+})();
+</script>
 <?php endif; ?>
-<main class="container-fluid px-4">
