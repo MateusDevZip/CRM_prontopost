@@ -66,6 +66,6 @@ require __DIR__ . '/includes/header.php';
 </main>
 
 <script>window.CSRF_TOKEN = <?= json_encode(csrf_token()) ?>;</script>
-<script src="assets/js/kanban.js"></script>
+<script src="<?= h(asset_versionado('assets/js/kanban.js')) ?>"></script>
 
 <?php require __DIR__ . '/includes/footer.php'; ?>

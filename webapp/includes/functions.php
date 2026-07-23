@@ -5,6 +5,13 @@ function h(?string $valor): string
     return htmlspecialchars($valor ?? '', ENT_QUOTES, 'UTF-8');
 }
 
+function asset_versionado(string $caminhoRelativo): string
+{
+    $caminhoAbsoluto = __DIR__ . '/../' . $caminhoRelativo;
+    $versao = file_exists($caminhoAbsoluto) ? filemtime($caminhoAbsoluto) : time();
+    return $caminhoRelativo . '?v=' . $versao;
+}
+
 function formatar_data(?string $data): string
 {
     if (!$data) {
