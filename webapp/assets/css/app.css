@@ -124,7 +124,7 @@ h1,h2,h3,p,dl,dd,dt,ul{margin:0}
 .card-title{font-size:15px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
 
 /* ===== KPIs ===== */
-.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px}
+.kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:16px}
 .kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px 20px;box-shadow:var(--shadow-sm)}
 .kpi-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
 .kpi-label{font-size:13px;font-weight:600;color:var(--muted)}

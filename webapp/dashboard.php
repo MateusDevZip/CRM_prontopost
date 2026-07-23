@@ -13,8 +13,7 @@ $resumo = db()->query("
 $totais = db()->query("
     SELECT
       (SELECT COUNT(*) FROM clientes) total_clientes,
-      (SELECT COUNT(*) FROM projetos p JOIN etapas e ON e.id = p.etapa_id WHERE e.is_final = 0) projetos_ativos,
-      (SELECT COALESCE(SUM(p.valor_estimado),0) FROM projetos p JOIN etapas e ON e.id = p.etapa_id WHERE e.is_final = 0) valor_ativo
+      (SELECT COUNT(*) FROM projetos p JOIN etapas e ON e.id = p.etapa_id WHERE e.is_final = 0) projetos_ativos
 ")->fetch();
 
 $proximas_acoes = db()->query("
@@ -66,13 +65,6 @@ require __DIR__ . '/includes/header.php';
         <span class="kpi-icon" style="background:var(--ok-soft);color:var(--ok)"><?= icone('grid') ?></span>
       </div>
       <div class="kpi-value"><?= (int)$totais['projetos_ativos'] ?></div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-head">
-        <span class="kpi-label">Valor estimado em aberto</span>
-        <span class="kpi-icon" style="background:var(--accent-soft);color:var(--accent)">R$</span>
-      </div>
-      <div class="kpi-value"><?= formatar_valor((float)$totais['valor_ativo']) ?></div>
     </div>
   </div>
 
