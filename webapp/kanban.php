@@ -9,7 +9,7 @@ $usuarios = listar_usuarios_ativos();
 $etapasRecolhidas = ['Criando posts', 'Novo contratado', 'Prontos', 'Enviado e não conectou'];
 
 $projetos = db()->query("
-    SELECT p.id, p.valor_estimado, p.chegou_em, p.proxima_acao_data, p.resultado_aprovacao, p.proximo_passo,
+    SELECT p.id, p.valor_estimado, p.chegou_em, p.proxima_acao_data, p.resultado_aprovacao, p.proximo_passo, p.link_blaster,
            p.etapa_id, p.plano_id, p.responsavel_id,
            c.nome cliente, c.link_atendimento, pl.nome plano, u.nome responsavel,
            COALESCE(n.qtd, 0) notas_qtd
@@ -98,12 +98,7 @@ require __DIR__ . '/includes/header.php';
               <?php endif; ?>
               <div class="kanban-card-tags">
                 <?php if ($p['plano']): ?><span class="tag" style="color:<?= $corPlano ?>;background:<?= $softPlano ?>"><?= h($p['plano']) ?></span><?php endif; ?>
-                <select class="kanban-card-responsavel" data-projeto-id="<?= (int)$p['id'] ?>" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">
-                  <option value="">Sem responsável</option>
-                  <?php foreach ($usuarios as $u): ?>
-                    <option value="<?= (int)$u['id'] ?>" <?= (int)($p['responsavel_id'] ?? 0) === (int)$u['id'] ? 'selected' : '' ?>><?= h($u['nome']) ?></option>
-                  <?php endforeach; ?>
-                </select>
+                <?php if ($p['responsavel']): ?><span class="tag kanban-card-responsavel" style="color:var(--muted);background:var(--surface3)"><?= h($p['responsavel']) ?></span><?php endif; ?>
               </div>
               <div class="kanban-card-extra">
                 <div class="kanban-card-field">
@@ -115,9 +110,17 @@ require __DIR__ . '/includes/header.php';
                   <?php endif; ?>
                 </div>
                 <div class="kanban-card-field">
-                  <span class="kanban-card-field-label">Link</span>
+                  <span class="kanban-card-field-label">Link atendimento</span>
                   <?php if ($p['link_atendimento']): ?>
                     <a href="<?= h($p['link_atendimento']) ?>" target="_blank" rel="noopener" class="kanban-card-link" onclick="event.stopPropagation()"><?= h($p['link_atendimento']) ?></a>
+                  <?php else: ?>
+                    <span class="kanban-card-field-value muted">-</span>
+                  <?php endif; ?>
+                </div>
+                <div class="kanban-card-field">
+                  <span class="kanban-card-field-label">Link blaster</span>
+                  <?php if ($p['link_blaster']): ?>
+                    <a href="<?= h($p['link_blaster']) ?>" target="_blank" rel="noopener" class="kanban-card-link" onclick="event.stopPropagation()"><?= h($p['link_blaster']) ?></a>
                   <?php else: ?>
                     <span class="kanban-card-field-value muted">-</span>
                   <?php endif; ?>

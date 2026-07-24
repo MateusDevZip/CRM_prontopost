@@ -124,6 +124,14 @@ require __DIR__ . '/includes/header.php';
               <span class="value">-</span>
             <?php endif; ?>
           </div>
+          <div class="contact-row">
+            <span class="icon-wrap"><?= icone('link', 15) ?></span>
+            <?php if ($projeto['link_blaster']): ?>
+              <a href="<?= h($projeto['link_blaster']) ?>" target="_blank" rel="noopener" class="value">Abrir blaster →</a>
+            <?php else: ?>
+              <span class="value">-</span>
+            <?php endif; ?>
+          </div>
         </div>
       </div>
     </div>

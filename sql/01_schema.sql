@@ -79,6 +79,7 @@ CREATE TABLE projetos (
   resultado_aprovacao VARCHAR(255) NULL,
   proxima_acao_data DATE NULL,
   proximo_passo TEXT NULL,
+  link_blaster VARCHAR(255) NULL COMMENT 'link do sistema Blaster (blaster.zipline.com.br) referente a este projeto',
   valor_estimado DECIMAL(10,2) NULL,
   criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   atualizado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

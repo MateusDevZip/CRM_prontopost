@@ -9,7 +9,7 @@ $projeto = [
     'cliente_id' => $clienteIdFixo, 'plano_id' => null, 'etapa_id' => null, 'responsavel_id' => null,
     'chegou_em' => date('Y-m-d'), 'mes_conteudo' => '', 'posts_no_mes' => '',
     'aprovacao_primeiro_post' => '', 'resultado_aprovacao' => '', 'proxima_acao_data' => '',
-    'proximo_passo' => '',
+    'proximo_passo' => '', 'link_blaster' => '',
 ];
 $erro = null;
 
@@ -37,12 +37,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $resultadoAprovacao = trim($_POST['resultado_aprovacao'] ?? '') ?: null;
     $proximaAcao = $_POST['proxima_acao_data'] ?: null;
     $proximoPasso = trim($_POST['proximo_passo'] ?? '') ?: null;
+    $linkBlaster = trim($_POST['link_blaster'] ?? '') ?: null;
 
     if (!$clienteId || !$etapaId) {
         $erro = 'Cliente e etapa são obrigatórios.';
         $projeto = compact(
             'clienteId', 'planoId', 'etapaId', 'responsavelId', 'chegouEm', 'mesConteudo',
-            'postsNoMes', 'aprovacao', 'resultadoAprovacao', 'proximaAcao', 'proximoPasso'
+            'postsNoMes', 'aprovacao', 'resultadoAprovacao', 'proximaAcao', 'proximoPasso', 'linkBlaster'
         );
     } else {
         $pdo = db();
@@ -52,10 +53,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $etapaAnteriorId = (int)$stmt->fetchColumn();
 
             $pdo->prepare("UPDATE projetos SET cliente_id=?, plano_id=?, etapa_id=?, responsavel_id=?, chegou_em=?, mes_conteudo=?,
-                posts_no_mes=?, aprovacao_primeiro_post=?, resultado_aprovacao=?, proxima_acao_data=?, proximo_passo=?
+                posts_no_mes=?, aprovacao_primeiro_post=?, resultado_aprovacao=?, proxima_acao_data=?, proximo_passo=?, link_blaster=?
                 WHERE id=?")
                 ->execute([$clienteId, $planoId, $etapaId, $responsavelId, $chegouEm, $mesConteudo, $postsNoMes,
-                    $aprovacao, $resultadoAprovacao, $proximaAcao, $proximoPasso, $id]);
+                    $aprovacao, $resultadoAprovacao, $proximaAcao, $proximoPasso, $linkBlaster, $id]);
 
             if ($etapaAnteriorId !== $etapaId) {
                 $pdo->prepare('INSERT INTO projeto_historico (projeto_id, etapa_anterior_id, etapa_nova_id, usuario_id) VALUES (?,?,?,?)')
@@ -64,10 +65,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             redirecionar('projeto_view.php?id=' . $id);
         } else {
             $pdo->prepare("INSERT INTO projetos (cliente_id, plano_id, etapa_id, responsavel_id, chegou_em, mes_conteudo,
-                posts_no_mes, aprovacao_primeiro_post, resultado_aprovacao, proxima_acao_data, proximo_passo)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?)")
+                posts_no_mes, aprovacao_primeiro_post, resultado_aprovacao, proxima_acao_data, proximo_passo, link_blaster)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?)")
                 ->execute([$clienteId, $planoId, $etapaId, $responsavelId, $chegouEm, $mesConteudo, $postsNoMes,
-                    $aprovacao, $resultadoAprovacao, $proximaAcao, $proximoPasso]);
+                    $aprovacao, $resultadoAprovacao, $proximaAcao, $proximoPasso, $linkBlaster]);
             $novoId = (int)$pdo->lastInsertId();
             $pdo->prepare('INSERT INTO projeto_historico (projeto_id, etapa_anterior_id, etapa_nova_id, usuario_id) VALUES (?,NULL,?,?)')
                 ->execute([$novoId, $etapaId, usuario_logado()['id']]);
@@ -167,6 +168,10 @@ require __DIR__ . '/includes/header.php';
         <div class="field">
           <label>Resultado da aprovação</label>
           <input type="text" name="resultado_aprovacao" value="<?= h($projeto['resultado_aprovacao']) ?>">
+        </div>
+        <div class="field field-span-2">
+          <label>Link blaster</label>
+          <input type="text" name="link_blaster" placeholder="https://blaster.zipline.com.br/egestor/..." value="<?= h($projeto['link_blaster']) ?>">
         </div>
       </div>
 
