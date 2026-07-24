@@ -6,8 +6,11 @@ $etapas = listar_etapas();
 $planos = listar_planos();
 $usuarios = listar_usuarios_ativos();
 
+$etapasRecolhidas = ['Criando posts', 'Novo contratado', 'Prontos', 'Enviado e não conectou'];
+
 $projetos = db()->query("
-    SELECT p.id, p.valor_estimado, p.chegou_em, p.proximo_passo, p.etapa_id, p.plano_id, p.responsavel_id,
+    SELECT p.id, p.valor_estimado, p.chegou_em, p.proxima_acao_data, p.resultado_aprovacao, p.proximo_passo,
+           p.etapa_id, p.plano_id, p.responsavel_id,
            c.nome cliente, c.link_atendimento, pl.nome plano, u.nome responsavel,
            COALESCE(n.qtd, 0) notas_qtd
     FROM projetos p
@@ -15,7 +18,7 @@ $projetos = db()->query("
     LEFT JOIN planos pl ON pl.id = p.plano_id
     LEFT JOIN usuarios u ON u.id = p.responsavel_id
     LEFT JOIN (SELECT projeto_id, COUNT(*) qtd FROM notas GROUP BY projeto_id) n ON n.projeto_id = p.id
-    ORDER BY p.atualizado_em DESC
+    ORDER BY p.chegou_em DESC
 ")->fetchAll();
 
 $por_etapa = [];
@@ -55,12 +58,20 @@ require __DIR__ . '/includes/header.php';
         <option value="<?= (int)$p['id'] ?>"><?= h($p['nome']) ?></option>
       <?php endforeach; ?>
     </select>
+    <span class="kanban-filtro-data">
+      <label for="kanbanDataDe">Chegou de</label>
+      <input type="date" id="kanbanDataDe">
+    </span>
+    <span class="kanban-filtro-data">
+      <label for="kanbanDataAte">até</label>
+      <input type="date" id="kanbanDataAte">
+    </span>
     <span id="kanbanFiltroContagem" class="kanban-filtro-contagem"></span>
   </div>
 
   <div class="kanban-board" id="kanbanBoard">
     <?php foreach ($etapas as $e): ?>
-      <div class="kanban-column" data-etapa-id="<?= (int)$e['id'] ?>">
+      <div class="kanban-column<?= in_array($e['nome'], $etapasRecolhidas, true) ? ' kanban-coluna-recolhida' : '' ?>" data-etapa-id="<?= (int)$e['id'] ?>" data-etapa-nome="<?= h($e['nome']) ?>">
         <div class="kanban-column-head" style="border-top-color:<?= h($e['cor']) ?>">
           <span class="dot" style="background:<?= h($e['cor']) ?>"></span>
           <span class="kanban-column-title"><?= h($e['nome']) ?></span>
@@ -73,14 +84,18 @@ require __DIR__ . '/includes/header.php';
                  data-cliente="<?= h(mb_strtolower($p['cliente'])) ?>"
                  data-responsavel-id="<?= (int)($p['responsavel_id'] ?? 0) ?>"
                  data-plano-id="<?= (int)($p['plano_id'] ?? 0) ?>"
+                 data-chegou-em="<?= h($p['chegou_em'] ?? '') ?>"
                  style="border-left-color:<?= h($e['cor']) ?>">
-              <a href="projeto_view.php?id=<?= (int)$p['id'] ?>" class="kanban-card-client"><?= h($p['cliente']) ?></a>
+              <a href="projeto_view.php?id=<?= (int)$p['id'] ?>" class="kanban-card-client" onclick="event.stopPropagation()"><?= h($p['cliente']) ?></a>
               <div class="kanban-card-date-row">
-                <span class="kanban-card-date"><?= formatar_data($p['chegou_em']) ?></span>
+                <span class="kanban-card-date">Chegou <?= formatar_data($p['chegou_em']) ?></span>
                 <?php if ($p['notas_qtd']): ?>
                   <span class="kanban-card-notas-badge" title="<?= (int)$p['notas_qtd'] ?> nota(s) da equipe"><?= icone('message-circle', 12, '2.4') ?><?= (int)$p['notas_qtd'] ?></span>
                 <?php endif; ?>
               </div>
+              <?php if ($p['proxima_acao_data']): $chipAcao = chip_data($p['proxima_acao_data']); ?>
+                <div class="kanban-card-acao-chip" style="color:<?= $chipAcao['cor'] ?>;background:<?= $chipAcao['soft'] ?>">Próxima ação: <?= $chipAcao['label'] ?></div>
+              <?php endif; ?>
               <div class="kanban-card-tags">
                 <?php if ($p['plano']): ?><span class="tag" style="color:<?= $corPlano ?>;background:<?= $softPlano ?>"><?= h($p['plano']) ?></span><?php endif; ?>
                 <select class="kanban-card-responsavel" data-projeto-id="<?= (int)$p['id'] ?>" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">
@@ -90,11 +105,34 @@ require __DIR__ . '/includes/header.php';
                   <?php endforeach; ?>
                 </select>
               </div>
-              <?php if ($p['link_atendimento']): ?>
-                <a href="<?= h($p['link_atendimento']) ?>" target="_blank" rel="noopener" class="kanban-card-link" onclick="event.stopPropagation()"><?= h($p['link_atendimento']) ?></a>
-              <?php endif; ?>
-              <?php if ($p['proximo_passo']): ?><div class="kanban-card-note"><?= h($p['proximo_passo']) ?></div><?php endif; ?>
-              <?php if ($p['valor_estimado'] !== null): ?><div class="kanban-card-note" style="font-weight:700;color:var(--text)"><?= formatar_valor((float)$p['valor_estimado']) ?></div><?php endif; ?>
+              <div class="kanban-card-extra">
+                <div class="kanban-card-field">
+                  <span class="kanban-card-field-label">Alerta</span>
+                  <?php if ($p['resultado_aprovacao']): ?>
+                    <div class="kanban-card-alerta"><?= icone('alert-triangle', 12, '2.4') ?><?= h($p['resultado_aprovacao']) ?></div>
+                  <?php else: ?>
+                    <span class="kanban-card-field-value muted">-</span>
+                  <?php endif; ?>
+                </div>
+                <div class="kanban-card-field">
+                  <span class="kanban-card-field-label">Link</span>
+                  <?php if ($p['link_atendimento']): ?>
+                    <a href="<?= h($p['link_atendimento']) ?>" target="_blank" rel="noopener" class="kanban-card-link" onclick="event.stopPropagation()"><?= h($p['link_atendimento']) ?></a>
+                  <?php else: ?>
+                    <span class="kanban-card-field-value muted">-</span>
+                  <?php endif; ?>
+                </div>
+                <div class="kanban-card-field">
+                  <span class="kanban-card-field-label">Próximo passo</span>
+                  <span class="kanban-card-field-value<?= $p['proximo_passo'] ? '' : ' muted' ?>" data-campo="proximo_passo"><?= $p['proximo_passo'] ? h($p['proximo_passo']) : '-' ?></span>
+                </div>
+                <?php if ($p['valor_estimado'] !== null): ?>
+                  <div class="kanban-card-field">
+                    <span class="kanban-card-field-label">Valor estimado</span>
+                    <span class="kanban-card-field-value" style="font-weight:700;color:var(--text)"><?= formatar_valor((float)$p['valor_estimado']) ?></span>
+                  </div>
+                <?php endif; ?>
+              </div>
               <a href="projeto_form.php?id=<?= (int)$p['id'] ?>" class="kanban-card-edit" title="Editar projeto" onclick="event.stopPropagation()"><?= icone('edit', 13, '2.2') ?></a>
             </div>
           <?php endforeach; ?>
@@ -103,6 +141,31 @@ require __DIR__ . '/includes/header.php';
     <?php endforeach; ?>
   </div>
 </main>
+
+<div class="modal-overlay" id="cardModalOverlay">
+  <div class="modal" id="cardModal">
+    <div class="modal-header">
+      <h3 id="cardModalCliente">Cliente</h3>
+      <button type="button" class="icon-action" id="cardModalFechar" title="Fechar"><span style="font-size:20px;line-height:1;padding:0 2px">&times;</span></button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Próximo passo</label>
+        <textarea id="cardModalProximoPasso" rows="3" placeholder="Qual o próximo passo desse projeto?"></textarea>
+        <div class="form-actions" style="justify-content:flex-start;margin-top:10px">
+          <button type="button" class="btn btn-primary btn-sm" id="cardModalSalvarPasso">Salvar próximo passo</button>
+        </div>
+      </div>
+
+      <div class="form-section-label" style="margin-top:22px">Notas da equipe</div>
+      <form id="cardModalNotaForm" class="note-composer">
+        <input type="text" id="cardModalNotaTexto" placeholder="Adicionar uma nota…" required>
+        <button type="submit" class="btn btn-primary btn-sm">Enviar</button>
+      </form>
+      <div id="cardModalNotasLista"></div>
+    </div>
+  </div>
+</div>
 
 <script>window.CSRF_TOKEN = <?= json_encode(csrf_token()) ?>;</script>
 <script src="<?= h(asset_versionado('assets/js/kanban.js')) ?>"></script>
