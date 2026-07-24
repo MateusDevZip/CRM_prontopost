@@ -59,10 +59,10 @@ $grupoAtivo = $grupoPorPagina[$pagina_atual] ?? $pagina_atual;
       <span id="theme-icon-sun" style="display:flex"><?= icone('sun', 17) ?></span>
       <span id="theme-icon-moon" style="display:none"><?= icone('moon', 17) ?></span>
     </button>
-    <span class="user-chip">
+    <a href="perfil.php" class="user-chip" title="Meu perfil">
       <span class="avatar" style="width:28px;height:28px;font-size:12px;background:<?= h(avatar_cor($usuario['nome'])) ?>"><?= h(iniciais($usuario['nome'])) ?></span>
       <span class="user-chip-name"><?= h($usuario['nome']) ?></span>
-    </span>
+    </a>
     <a href="logout.php" class="logout-link">Sair</a>
   </div>
 </header>
