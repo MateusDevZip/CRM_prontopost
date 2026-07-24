@@ -84,6 +84,41 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
+  board.querySelectorAll('.kanban-card-responsavel').forEach(function (select) {
+    let valorAnterior = select.value;
+    select.addEventListener('change', function () {
+      const novoValor = select.value;
+      const projetoId = select.dataset.projetoId;
+      const nomeResponsavel = select.options[select.selectedIndex].text;
+
+      fetch('api/atualizar_responsavel.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          projeto_id: projetoId,
+          responsavel_id: novoValor,
+          csrf_token: window.CSRF_TOKEN,
+        }),
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (resp) {
+          if (!resp.ok) {
+            select.value = valorAnterior;
+            mostrarToast('Não foi possível atribuir: ' + (resp.erro || 'erro desconhecido'), 'error');
+            return;
+          }
+          valorAnterior = novoValor;
+          select.closest('.kanban-card').dataset.responsavelId = novoValor;
+          mostrarToast('Responsável: ' + nomeResponsavel, 'success');
+          if (typeof aplicarFiltros === 'function') aplicarFiltros();
+        })
+        .catch(function () {
+          select.value = valorAnterior;
+          mostrarToast('Erro de conexão ao atribuir responsável.', 'error');
+        });
+    });
+  });
+
   function atualizarContadores() {
     document.querySelectorAll('.kanban-column').forEach(function (coluna) {
       const qtd = coluna.querySelectorAll('.kanban-card:not(.kanban-card-hidden)').length;

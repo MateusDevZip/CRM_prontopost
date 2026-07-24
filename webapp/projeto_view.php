@@ -80,7 +80,7 @@ require __DIR__ . '/includes/header.php';
       </div>
     </div>
     <div style="display:flex;gap:10px">
-      <a href="cliente_form.php?id=<?= (int)$projeto['cliente_id'] ?>" class="btn btn-outline">Editar contato</a>
+      <a href="cliente_view.php?id=<?= (int)$projeto['cliente_id'] ?>" class="btn btn-outline">Ver perfil do cliente</a>
       <a href="projeto_form.php?id=<?= (int)$projeto['id'] ?>" class="btn btn-primary"><?= icone('edit', 15) ?>Editar projeto</a>
     </div>
   </div>

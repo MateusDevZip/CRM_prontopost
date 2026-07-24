@@ -83,7 +83,12 @@ require __DIR__ . '/includes/header.php';
               </div>
               <div class="kanban-card-tags">
                 <?php if ($p['plano']): ?><span class="tag" style="color:<?= $corPlano ?>;background:<?= $softPlano ?>"><?= h($p['plano']) ?></span><?php endif; ?>
-                <?php if ($p['responsavel']): ?><span class="tag" style="color:var(--muted);background:var(--surface3)"><?= h($p['responsavel']) ?></span><?php endif; ?>
+                <select class="kanban-card-responsavel" data-projeto-id="<?= (int)$p['id'] ?>" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">
+                  <option value="">Sem responsável</option>
+                  <?php foreach ($usuarios as $u): ?>
+                    <option value="<?= (int)$u['id'] ?>" <?= (int)($p['responsavel_id'] ?? 0) === (int)$u['id'] ? 'selected' : '' ?>><?= h($u['nome']) ?></option>
+                  <?php endforeach; ?>
+                </select>
               </div>
               <?php if ($p['link_atendimento']): ?>
                 <a href="<?= h($p['link_atendimento']) ?>" target="_blank" rel="noopener" class="kanban-card-link" onclick="event.stopPropagation()"><?= h($p['link_atendimento']) ?></a>

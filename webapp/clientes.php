@@ -78,10 +78,10 @@ require __DIR__ . '/includes/header.php';
           <?php foreach ($clientes as $c): ?>
             <tr>
               <td>
-                <div style="display:flex;align-items:center;gap:11px">
+                <a href="cliente_view.php?id=<?= (int)$c['id'] ?>" style="display:flex;align-items:center;gap:11px;text-decoration:none;color:inherit">
                   <span class="avatar avatar-sq" style="width:34px;height:34px;font-size:12.5px;background:<?= h(avatar_cor($c['nome'])) ?>"><?= h(iniciais($c['nome'])) ?></span>
                   <div style="font-weight:700;font-size:13.5px"><?= h($c['nome']) ?></div>
-                </div>
+                </a>
               </td>
               <td>
                 <?php if ($c['telefone']): ?><div><?= h($c['telefone']) ?></div><?php endif; ?>

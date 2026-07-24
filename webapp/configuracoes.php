@@ -103,11 +103,12 @@ $tabDefs = [
   <div class="card">
     <?php if ($aba === 'etapas'): ?>
       <div class="table-wrap">
-        <table class="data-table">
-          <thead><tr><th>Ordem</th><th>Nome da etapa</th><th>Cor</th><th>Etapa final</th><th></th></tr></thead>
+        <table class="data-table" id="etapasTable">
+          <thead><tr><th></th><th>Ordem</th><th>Nome da etapa</th><th>Cor</th><th>Etapa final</th><th></th></tr></thead>
           <tbody>
           <?php foreach ($etapas as $e): ?>
-            <tr>
+            <tr draggable="true" data-etapa-id="<?= (int)$e['id'] ?>">
+              <td style="width:28px"><span class="drag-handle" title="Arrastar para reordenar"><?= icone('grip', 15, '2') ?></span></td>
               <td style="width:70px">
                 <form method="post" id="etapa-<?= (int)$e['id'] ?>">
                   <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
@@ -276,5 +277,8 @@ $tabDefs = [
     <?php endif; ?>
   </div>
 </main>
+
+<script>window.CSRF_TOKEN = <?= json_encode(csrf_token()) ?>;</script>
+<script src="<?= h(asset_versionado('assets/js/configuracoes.js')) ?>"></script>
 
 <?php require __DIR__ . '/includes/footer.php'; ?>
