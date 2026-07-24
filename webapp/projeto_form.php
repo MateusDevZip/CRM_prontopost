@@ -9,7 +9,7 @@ $projeto = [
     'cliente_id' => $clienteIdFixo, 'plano_id' => null, 'etapa_id' => null, 'responsavel_id' => null,
     'chegou_em' => date('Y-m-d'), 'mes_conteudo' => '', 'posts_no_mes' => '',
     'aprovacao_primeiro_post' => '', 'resultado_aprovacao' => '', 'proxima_acao_data' => '',
-    'proximo_passo' => '', 'valor_estimado' => '',
+    'proximo_passo' => '',
 ];
 $erro = null;
 
@@ -37,13 +37,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $resultadoAprovacao = trim($_POST['resultado_aprovacao'] ?? '') ?: null;
     $proximaAcao = $_POST['proxima_acao_data'] ?: null;
     $proximoPasso = trim($_POST['proximo_passo'] ?? '') ?: null;
-    $valorEstimado = $_POST['valor_estimado'] !== '' ? (float)str_replace(',', '.', $_POST['valor_estimado']) : null;
 
     if (!$clienteId || !$etapaId) {
         $erro = 'Cliente e etapa são obrigatórios.';
         $projeto = compact(
             'clienteId', 'planoId', 'etapaId', 'responsavelId', 'chegouEm', 'mesConteudo',
-            'postsNoMes', 'aprovacao', 'resultadoAprovacao', 'proximaAcao', 'proximoPasso', 'valorEstimado'
+            'postsNoMes', 'aprovacao', 'resultadoAprovacao', 'proximaAcao', 'proximoPasso'
         );
     } else {
         $pdo = db();
@@ -53,10 +52,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $etapaAnteriorId = (int)$stmt->fetchColumn();
 
             $pdo->prepare("UPDATE projetos SET cliente_id=?, plano_id=?, etapa_id=?, responsavel_id=?, chegou_em=?, mes_conteudo=?,
-                posts_no_mes=?, aprovacao_primeiro_post=?, resultado_aprovacao=?, proxima_acao_data=?, proximo_passo=?, valor_estimado=?
+                posts_no_mes=?, aprovacao_primeiro_post=?, resultado_aprovacao=?, proxima_acao_data=?, proximo_passo=?
                 WHERE id=?")
                 ->execute([$clienteId, $planoId, $etapaId, $responsavelId, $chegouEm, $mesConteudo, $postsNoMes,
-                    $aprovacao, $resultadoAprovacao, $proximaAcao, $proximoPasso, $valorEstimado, $id]);
+                    $aprovacao, $resultadoAprovacao, $proximaAcao, $proximoPasso, $id]);
 
             if ($etapaAnteriorId !== $etapaId) {
                 $pdo->prepare('INSERT INTO projeto_historico (projeto_id, etapa_anterior_id, etapa_nova_id, usuario_id) VALUES (?,?,?,?)')
@@ -65,10 +64,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             redirecionar('projeto_view.php?id=' . $id);
         } else {
             $pdo->prepare("INSERT INTO projetos (cliente_id, plano_id, etapa_id, responsavel_id, chegou_em, mes_conteudo,
-                posts_no_mes, aprovacao_primeiro_post, resultado_aprovacao, proxima_acao_data, proximo_passo, valor_estimado)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?)")
+                posts_no_mes, aprovacao_primeiro_post, resultado_aprovacao, proxima_acao_data, proximo_passo)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?)")
                 ->execute([$clienteId, $planoId, $etapaId, $responsavelId, $chegouEm, $mesConteudo, $postsNoMes,
-                    $aprovacao, $resultadoAprovacao, $proximaAcao, $proximoPasso, $valorEstimado]);
+                    $aprovacao, $resultadoAprovacao, $proximaAcao, $proximoPasso]);
             $novoId = (int)$pdo->lastInsertId();
             $pdo->prepare('INSERT INTO projeto_historico (projeto_id, etapa_anterior_id, etapa_nova_id, usuario_id) VALUES (?,NULL,?,?)')
                 ->execute([$novoId, $etapaId, usuario_logado()['id']]);
@@ -171,14 +170,10 @@ require __DIR__ . '/includes/header.php';
         </div>
       </div>
 
-      <div class="field-grid" style="grid-template-columns:1fr 220px">
+      <div class="field-grid" style="grid-template-columns:1fr">
         <div class="field">
           <label>Próximo passo</label>
           <textarea name="proximo_passo" rows="3"><?= h($projeto['proximo_passo']) ?></textarea>
-        </div>
-        <div class="field">
-          <label>Valor estimado (R$)</label>
-          <input type="text" name="valor_estimado" value="<?= h((string)($projeto['valor_estimado'] ?? '')) ?>">
         </div>
       </div>
 
