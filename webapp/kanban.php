@@ -46,6 +46,7 @@ require __DIR__ . '/includes/header.php';
           <div class="kanban-drop-overlay"></div>
           <?php foreach ($por_etapa[$e['id']] as $p): [$corPlano, $softPlano] = plano_tag_cor($p['plano']); ?>
             <div class="kanban-card" draggable="true" data-projeto-id="<?= (int)$p['id'] ?>" style="border-left-color:<?= h($e['cor']) ?>">
+              <a href="projeto_form.php?id=<?= (int)$p['id'] ?>" class="kanban-card-edit" title="Editar projeto" onclick="event.stopPropagation()"><?= icone('edit', 13, '2.2') ?></a>
               <a href="projeto_view.php?id=<?= (int)$p['id'] ?>" class="kanban-card-client"><?= h($p['cliente']) ?></a>
               <div class="kanban-card-date"><?= formatar_data($p['chegou_em']) ?></div>
               <div class="kanban-card-tags">
