@@ -72,14 +72,17 @@ document.addEventListener('DOMContentLoaded', function () {
             origem.appendChild(card);
             mostrarToast('Não foi possível mover o card: ' + (resp.erro || 'erro desconhecido'), 'error');
           } else {
+            card.dataset.finalizadoEm = resp.finalizado_em ? resp.finalizado_em.slice(0, 10) : '';
             mostrarToast('Movido para "' + etapaNome + '"', 'success');
           }
           atualizarContadores();
+          aplicarFiltros();
         })
         .catch(function () {
           origem.appendChild(card);
           mostrarToast('Erro de conexão ao mover o card.', 'error');
           atualizarContadores();
+          aplicarFiltros();
         });
     });
   });
@@ -267,6 +270,8 @@ document.addEventListener('DOMContentLoaded', function () {
   const filtroDataDe = document.getElementById('kanbanDataDe');
   const filtroDataAte = document.getElementById('kanbanDataAte');
   const contagem = document.getElementById('kanbanFiltroContagem');
+  const mesPronto = document.getElementById('kanbanMesPronto');
+  const mesProntoLimpar = document.getElementById('kanbanMesProntoLimpar');
   const todosCards = board.querySelectorAll('.kanban-card');
 
   function aplicarFiltros() {
@@ -275,6 +280,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const planoId = filtroPlano.value;
     const dataDe = filtroDataDe.value;
     const dataAte = filtroDataAte.value;
+    const mesSelecionado = mesPronto ? mesPronto.value : '';
     let visiveis = 0;
 
     todosCards.forEach(function (card) {
@@ -284,13 +290,27 @@ document.addEventListener('DOMContentLoaded', function () {
       const batePlano = !planoId || card.dataset.planoId === planoId;
       const bateDataDe = !dataDe || (chegouEm && chegouEm >= dataDe);
       const bateDataAte = !dataAte || (chegouEm && chegouEm <= dataAte);
-      const visivel = bateNome && bateResponsavel && batePlano && bateDataDe && bateDataAte;
+
+      const coluna = card.closest('.kanban-column');
+      const ehColunaPronto = !!coluna && coluna.dataset.etapaNome === 'Prontos';
+      const finalizadoEm = card.dataset.finalizadoEm || '';
+      const bateMesPronto = !ehColunaPronto || !mesSelecionado || finalizadoEm.slice(0, 7) === mesSelecionado;
+
+      const visivel = bateNome && bateResponsavel && batePlano && bateDataDe && bateDataAte && bateMesPronto;
       card.classList.toggle('kanban-card-hidden', !visivel);
       if (visivel) visiveis++;
     });
 
     atualizarContadores();
     contagem.textContent = visiveis + ' de ' + todosCards.length + ' projetos';
+  }
+
+  if (mesPronto && mesProntoLimpar) {
+    mesPronto.addEventListener('change', aplicarFiltros);
+    mesProntoLimpar.addEventListener('click', function () {
+      mesPronto.value = '';
+      aplicarFiltros();
+    });
   }
 
   if (busca && filtroResponsavel && filtroPlano && filtroDataDe && filtroDataAte && contagem) {

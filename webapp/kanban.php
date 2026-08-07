@@ -9,7 +9,7 @@ $usuarios = listar_usuarios_ativos();
 $etapasRecolhidas = ['Criando posts', 'Novo contratado', 'Prontos', 'Enviado e não conectou'];
 
 $projetos = db()->query("
-    SELECT p.id, p.valor_estimado, p.chegou_em, p.proxima_acao_data, p.resultado_aprovacao, p.proximo_passo, p.link_blaster,
+    SELECT p.id, p.valor_estimado, p.chegou_em, p.finalizado_em, p.proxima_acao_data, p.resultado_aprovacao, p.proximo_passo, p.link_blaster,
            p.etapa_id, p.plano_id, p.responsavel_id,
            c.nome cliente, c.link_atendimento, pl.nome plano, u.nome responsavel,
            COALESCE(n.qtd, 0) notas_qtd
@@ -77,6 +77,12 @@ require __DIR__ . '/includes/header.php';
           <span class="kanban-column-title"><?= h($e['nome']) ?></span>
           <span class="kanban-column-count"><?= count($por_etapa[$e['id']]) ?></span>
         </div>
+        <?php if ($e['nome'] === 'Prontos'): ?>
+          <div class="kanban-column-filtro-mes">
+            <input type="month" id="kanbanMesPronto" value="<?= h(date('Y-m')) ?>" title="Mostrar projetos prontos finalizados neste mês">
+            <button type="button" id="kanbanMesProntoLimpar" title="Mostrar projetos prontos de todos os meses">Todos</button>
+          </div>
+        <?php endif; ?>
         <div class="kanban-column-body" data-etapa-id="<?= (int)$e['id'] ?>">
           <div class="kanban-drop-overlay"></div>
           <?php foreach ($por_etapa[$e['id']] as $p): [$corPlano, $softPlano] = plano_tag_cor($p['plano']); ?>
@@ -85,6 +91,7 @@ require __DIR__ . '/includes/header.php';
                  data-responsavel-id="<?= (int)($p['responsavel_id'] ?? 0) ?>"
                  data-plano-id="<?= (int)($p['plano_id'] ?? 0) ?>"
                  data-chegou-em="<?= h($p['chegou_em'] ?? '') ?>"
+                 data-finalizado-em="<?= h($p['finalizado_em'] ? date('Y-m-d', strtotime($p['finalizado_em'])) : '') ?>"
                  style="border-left-color:<?= h($e['cor']) ?>">
               <a href="projeto_view.php?id=<?= (int)$p['id'] ?>" class="kanban-card-client" onclick="event.stopPropagation()"><?= h($p['cliente']) ?></a>
               <div class="kanban-card-date-row">

@@ -9,7 +9,7 @@ $projeto = [
     'cliente_id' => $clienteIdFixo, 'plano_id' => null, 'etapa_id' => null, 'responsavel_id' => null,
     'chegou_em' => date('Y-m-d'), 'mes_conteudo' => '', 'posts_no_mes' => '',
     'aprovacao_primeiro_post' => '', 'resultado_aprovacao' => '', 'proxima_acao_data' => '',
-    'proximo_passo' => '', 'link_blaster' => '',
+    'proximo_passo' => '', 'link_blaster' => '', 'finalizado_em' => '',
 ];
 $erro = null;
 
@@ -38,12 +38,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $proximaAcao = $_POST['proxima_acao_data'] ?: null;
     $proximoPasso = trim($_POST['proximo_passo'] ?? '') ?: null;
     $linkBlaster = trim($_POST['link_blaster'] ?? '') ?: null;
+    $finalizadoEm = $_POST['finalizado_em'] ?: null;
 
     if (!$clienteId || !$etapaId) {
         $erro = 'Cliente e etapa são obrigatórios.';
         $projeto = compact(
             'clienteId', 'planoId', 'etapaId', 'responsavelId', 'chegouEm', 'mesConteudo',
-            'postsNoMes', 'aprovacao', 'resultadoAprovacao', 'proximaAcao', 'proximoPasso', 'linkBlaster'
+            'postsNoMes', 'aprovacao', 'resultadoAprovacao', 'proximaAcao', 'proximoPasso', 'linkBlaster', 'finalizadoEm'
         );
     } else {
         $pdo = db();
@@ -59,8 +60,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $aprovacao, $resultadoAprovacao, $proximaAcao, $proximoPasso, $linkBlaster, $id]);
 
             if ($etapaAnteriorId !== $etapaId) {
+                atualizar_finalizado_em($id, $etapaAnteriorId, $etapaId);
                 $pdo->prepare('INSERT INTO projeto_historico (projeto_id, etapa_anterior_id, etapa_nova_id, usuario_id) VALUES (?,?,?,?)')
                     ->execute([$id, $etapaAnteriorId, $etapaId, usuario_logado()['id']]);
+            }
+
+            $finalizadoEmAnterior = $projeto['finalizado_em'] ? date('Y-m-d', strtotime($projeto['finalizado_em'])) : null;
+            if ($finalizadoEm !== $finalizadoEmAnterior) {
+                $pdo->prepare('UPDATE projetos SET finalizado_em = ? WHERE id = ?')->execute([$finalizadoEm, $id]);
             }
             redirecionar('projeto_view.php?id=' . $id);
         } else {
@@ -70,6 +77,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ->execute([$clienteId, $planoId, $etapaId, $responsavelId, $chegouEm, $mesConteudo, $postsNoMes,
                     $aprovacao, $resultadoAprovacao, $proximaAcao, $proximoPasso, $linkBlaster]);
             $novoId = (int)$pdo->lastInsertId();
+            atualizar_finalizado_em($novoId, null, $etapaId);
+            if ($finalizadoEm !== null) {
+                $pdo->prepare('UPDATE projetos SET finalizado_em = ? WHERE id = ?')->execute([$finalizadoEm, $novoId]);
+            }
             $pdo->prepare('INSERT INTO projeto_historico (projeto_id, etapa_anterior_id, etapa_nova_id, usuario_id) VALUES (?,NULL,?,?)')
                 ->execute([$novoId, $etapaId, usuario_logado()['id']]);
             redirecionar('projeto_view.php?id=' . $novoId);
@@ -156,6 +167,10 @@ require __DIR__ . '/includes/header.php';
         <div class="field">
           <label>Próxima ação</label>
           <input type="date" name="proxima_acao_data" value="<?= h($projeto['proxima_acao_data']) ?>">
+        </div>
+        <div class="field">
+          <label>Concluído em</label>
+          <input type="date" name="finalizado_em" value="<?= h($projeto['finalizado_em'] ? date('Y-m-d', strtotime($projeto['finalizado_em'])) : '') ?>">
         </div>
         <div class="field">
           <label>Mês de conteúdo</label>

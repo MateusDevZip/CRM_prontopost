@@ -46,10 +46,16 @@ if ($etapaAnteriorId === $etapaId) {
 $pdo->beginTransaction();
 try {
     $pdo->prepare('UPDATE projetos SET etapa_id = ? WHERE id = ?')->execute([$etapaId, $projetoId]);
+    atualizar_finalizado_em($projetoId, $etapaAnteriorId, $etapaId);
     $pdo->prepare('INSERT INTO projeto_historico (projeto_id, etapa_anterior_id, etapa_nova_id, usuario_id) VALUES (?, ?, ?, ?)')
         ->execute([$projetoId, $etapaAnteriorId, $etapaId, usuario_logado()['id']]);
     $pdo->commit();
-    echo json_encode(['ok' => true]);
+
+    $stmtFinal = $pdo->prepare('SELECT finalizado_em FROM projetos WHERE id = ?');
+    $stmtFinal->execute([$projetoId]);
+    $finalizadoEm = $stmtFinal->fetchColumn();
+
+    echo json_encode(['ok' => true, 'finalizado_em' => $finalizadoEm ?: null]);
 } catch (Throwable $e) {
     $pdo->rollBack();
     http_response_code(500);

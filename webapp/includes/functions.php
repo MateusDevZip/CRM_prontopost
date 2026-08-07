@@ -54,6 +54,25 @@ function listar_usuarios_ativos(): array
     return db()->query("SELECT id, nome FROM usuarios WHERE ativo = 1 ORDER BY nome")->fetchAll();
 }
 
+function etapa_prontos_id(): ?int
+{
+    $id = db()->query("SELECT id FROM etapas WHERE nome = 'Prontos' LIMIT 1")->fetchColumn();
+    return $id !== false ? (int) $id : null;
+}
+
+function atualizar_finalizado_em(int $projetoId, ?int $etapaAnteriorId, int $etapaNovaId): void
+{
+    $prontosId = etapa_prontos_id();
+    if ($prontosId === null || $etapaAnteriorId === $etapaNovaId) {
+        return;
+    }
+    if ($etapaNovaId === $prontosId) {
+        db()->prepare('UPDATE projetos SET finalizado_em = NOW() WHERE id = ?')->execute([$projetoId]);
+    } elseif ($etapaAnteriorId === $prontosId) {
+        db()->prepare('UPDATE projetos SET finalizado_em = NULL WHERE id = ?')->execute([$projetoId]);
+    }
+}
+
 function iniciais(string $nome): string
 {
     $partes = preg_split('/\s+/', trim($nome));
