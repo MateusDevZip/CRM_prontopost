@@ -10,6 +10,7 @@ $grupoPorPagina = [
     'projeto_view.php' => 'kanban.php',
     'clientes.php' => 'clientes.php',
     'cliente_form.php' => 'clientes.php',
+    'relatorios.php' => 'relatorios.php',
     'configuracoes.php' => 'configuracoes.php',
 ];
 $grupoAtivo = $grupoPorPagina[$pagina_atual] ?? $pagina_atual;
@@ -46,6 +47,7 @@ $grupoAtivo = $grupoPorPagina[$pagina_atual] ?? $pagina_atual;
     <a href="dashboard.php" class="topbar-nav-item <?= $grupoAtivo === 'dashboard.php' ? 'active' : '' ?>">Dashboard</a>
     <a href="kanban.php" class="topbar-nav-item <?= $grupoAtivo === 'kanban.php' ? 'active' : '' ?>">Kanban</a>
     <a href="clientes.php" class="topbar-nav-item <?= $grupoAtivo === 'clientes.php' ? 'active' : '' ?>">Contatos</a>
+    <a href="relatorios.php" class="topbar-nav-item <?= $grupoAtivo === 'relatorios.php' ? 'active' : '' ?>">Relatórios</a>
     <?php if ($usuario['papel'] === 'admin'): ?>
       <a href="configuracoes.php" class="topbar-nav-item <?= $grupoAtivo === 'configuracoes.php' ? 'active' : '' ?>">Configurações</a>
     <?php endif; ?>
